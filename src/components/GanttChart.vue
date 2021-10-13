@@ -6,9 +6,19 @@
       '--gantt-chart-v-sub-separator-width': `calc(100% / ${hoursOfTerm / subSeparatorSpan})`,
     }"
   >
+    <thead>
+      <tr>
+        <th
+          v-for="header, headerIndex in head.headers"
+          :key="`head-header-${headerIndex}`"
+        >
+          <div class="head-header-content">{{ header.label }}</div>
+        </th>
+      </tr>
+    </thead>
     <tbody>
       <tr
-        v-for="row, rowIndex in data"
+        v-for="row, rowIndex in body"
         :key="`row-${rowIndex}`"
       >
         <th
@@ -40,7 +50,12 @@ export default {
   name: 'GanttChart',
 
   props: {
-    data: {
+    head: {
+      type: Object,
+      required: true
+    },
+
+    body: {
       type: Array,
       required: true
     },
@@ -71,7 +86,7 @@ export default {
 
     mainSeparatorSpan: {
       type: Number,
-      default: 6
+      default: 24
     },
 
     subSeparatorSpan: {
@@ -95,12 +110,12 @@ export default {
 
     rowSpan () {
       return (rowIndex, headerIndex) => {
-        if (this.data[rowIndex].headers[headerIndex].rowSpan) {
+        if (this.body[rowIndex].headers[headerIndex].rowSpan) {
           return null
         }
         let rowSpan = 0
-        for (let i = rowIndex + 1; i < this.data.length; i++, rowSpan++) {
-          const header = this.data[i].headers[headerIndex]
+        for (let i = rowIndex + 1; i < this.body.length; i++, rowSpan++) {
+          const header = this.body[i].headers[headerIndex]
           if (header === undefined || !header.rowSpan) {
             break
           }
@@ -117,7 +132,7 @@ export default {
 
     barVisible () {
       return (rowIndex, barIndex) => {
-        const bar = this.data[rowIndex].bars[barIndex]
+        const bar = this.body[rowIndex].bars[barIndex]
         const barFromTime = new Date(bar.from).getTime()
         const barToTime = new Date(bar.to).getTime()
         return (
@@ -129,12 +144,12 @@ export default {
   },
 
   mounted () {
-    for (let rowIndex = 0; rowIndex < this.data.length; rowIndex++) {
-      for (let barIndex = 0; barIndex < this.data[rowIndex].bars.length; barIndex++) {
+    for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
+      for (let barIndex = 0; barIndex < this.body[rowIndex].bars.length; barIndex++) {
         if (!this.barVisible(rowIndex, barIndex)) {
           continue
         }
-        const bar = this.data[rowIndex].bars[barIndex]
+        const bar = this.body[rowIndex].bars[barIndex]
         const barId = this.barId(rowIndex, barIndex)
         const $bar = this.$el.querySelector(`[data-id="${barId}"]`)
         const barFromTime = new Date(bar.from).getTime()
@@ -151,6 +166,10 @@ export default {
 <style>
 .gantt-chart {
   --gantt-chart-border-color: #c0c0c0;
+
+  /* ヘッドヘッダー */
+  --gantt-chart-head-header-bg-color: #d0d0d0;
+  --gantt-chart-head-header-fg-color: #303030;
 
   /* ボディヘッダー */
   --gantt-chart-body-header-bg-color: #e0e0e0;
@@ -180,7 +199,18 @@ export default {
   width: 100%;
 }
 
-th {
+thead th {
+  background-color: var(--gantt-chart-head-header-bg-color);
+  padding: 0.5em 1em;
+  user-select: none;
+}
+
+.head-header-content {
+  color: var(--gantt-chart-head-header-fg-color);
+  white-space: pre;
+}
+
+tbody th {
   background-color: var(--gantt-chart-body-header-bg-color);
   padding: 0.5em 1em;
   user-select: none;
@@ -191,7 +221,7 @@ th {
   white-space: pre;
 }
 
-td {
+tbody td {
   background-color: var(--gantt-chart-body-data-bg-color);
   overflow-x: hidden;
   padding: 0;
