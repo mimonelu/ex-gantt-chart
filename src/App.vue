@@ -17,12 +17,22 @@ export default {
   data () {
     return {
       ganttChartProps: {
-        head: {
-          headers: [
-            { label: 'Head header 1' },
-            { label: 'Head header 2' }
-          ]
+        from: '2021/11/07 00:00:00',
+        to: '2021/11/13 23:59:59',
+
+        mainSeparatorSpan: 24,
+        subSeparatorSpan: 6,
+
+        headers: [
+          { label: 'Head header 1' },
+          { label: 'Head header 2' }
+        ],
+
+        dateFormatter (date) {
+          const days = ['日', '月', '火', '水', '木', '金', '土']
+          return `${date.getMonth() + 1}/${date.getDate()} (${days[date.getDay()]})`
         },
+
         body: [
           {
             headers: [
@@ -31,8 +41,8 @@ export default {
             ],
             bars: [
               {
-                from: '2021/10/11 22:00:00',
-                to: '2021/10/12 9:00:00',
+                from: '2021/11/11 22:00:00',
+                to: '2021/11/12 9:00:00',
                 label: 'Bar'
               }
             ]
@@ -44,18 +54,18 @@ export default {
             ],
             bars: [
               {
-                from: '2021/10/12 12:00:00',
-                to: '2021/10/12 15:00:00',
+                from: '2021/11/12 12:00:00',
+                to: '2021/11/12 15:00:00',
                 label: 'Bar 2-2-a'
               },
               {
-                from: '2021/10/12 15:30:00',
-                to: '2021/10/12 19:30:00',
+                from: '2021/11/12 15:30:00',
+                to: '2021/11/13 19:30:00',
                 label: 'Bar 2-2-b'
               },
               {
-                from: '2021/10/13 14:00:00',
-                to: '2021/10/13 18:00:00',
+                from: '2021/11/13 14:00:00',
+                to: '2021/11/15 18:00:00',
                 label: 'Bar 2-2-c'
               }
             ]
@@ -67,8 +77,8 @@ export default {
             ],
             bars: [
               {
-                from: '2021/10/12 18:00:00',
-                to: '2021/10/13 01:30:00',
+                from: '2021/11/12 18:00:00',
+                to: '2021/11/13 01:30:00',
                 label: 'Bar 2-3-a'
               }
             ]

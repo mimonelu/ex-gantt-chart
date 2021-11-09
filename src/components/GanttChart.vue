@@ -1,48 +1,62 @@
 <template>
-  <table
+  <div
     class="gantt-chart"
     :style="{
       '--gantt-chart-v-main-separator-width': `calc(100% / ${hoursOfTerm / mainSeparatorSpan})`,
       '--gantt-chart-v-sub-separator-width': `calc(100% / ${hoursOfTerm / subSeparatorSpan})`,
     }"
   >
-    <thead>
-      <tr>
-        <th
-          v-for="header, headerIndex in head.headers"
-          :key="`head-header-${headerIndex}`"
-        >
-          <div class="head-header-content">{{ header.label }}</div>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr
-        v-for="row, rowIndex in body"
-        :key="`row-${rowIndex}`"
-      >
-        <th
-          v-for="header, headerIndex in row.headers"
-          :key="`body-header-${rowIndex}-${headerIndex}`"
-          :rowspan="rowSpan(rowIndex, headerIndex)"
-          :style="{ display: header.rowSpan ? 'none': '' }"
-        >
-          <div class="body-header-content">{{ header.label }}</div>
-        </th>
-        <td>
-          <div
-            v-for="bar, barIndex in row.bars"
-            :key="barId(rowIndex, barIndex)"
-            class="bar"
-            :data-id="barId(rowIndex, barIndex)"
-            :data-visible="barVisible(rowIndex, barIndex).toString()"
+    <table>
+      <thead>
+        <tr>
+          <th
+            v-for="header, headerIndex in headers"
+            :key="`head-header-${headerIndex}`"
           >
-            <div class="bar-content">{{ bar.label }}</div>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+            <div class="head-header-content">{{ header.label }}</div>
+          </th>
+          <td>
+            <div
+              class="date-container"
+              :style="`grid-template-columns: repeat(${dateOfTerm}, 1fr);`"
+            >
+              <div
+                v-for="date, dateIndex of datesInTerm"
+                :key="`date-${dateIndex}`"
+                class="date"
+              >{{ dateFormatter(date) }}</div>
+            </div>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="row, rowIndex in body"
+          :key="`row-${rowIndex}`"
+        >
+          <th
+            v-for="header, headerIndex in row.headers"
+            :key="`body-header-${rowIndex}-${headerIndex}`"
+            :rowspan="rowSpan(rowIndex, headerIndex)"
+            :style="{ display: header.rowSpan ? 'none': '' }"
+          >
+            <div class="body-header-content">{{ header.label }}</div>
+          </th>
+          <td>
+            <div
+              v-for="bar, barIndex in row.bars"
+              :key="barId(rowIndex, barIndex)"
+              class="bar"
+              :data-id="barId(rowIndex, barIndex)"
+              :data-visible="barVisible(rowIndex, barIndex).toString()"
+            >
+              <div class="bar-content">{{ bar.label }}</div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </template>
 
 <script>
@@ -50,9 +64,16 @@ export default {
   name: 'GanttChart',
 
   props: {
-    head: {
-      type: Object,
+    headers: {
+      type: Array,
       required: true
+    },
+
+    dateFormatter: {
+      type: Function,
+      default (date) {
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+      }
     },
 
     body: {
@@ -64,7 +85,7 @@ export default {
       type: String,
       default () {
         const date = new Date()
-        date.setDate(date.getDate() - 1)
+        date.setDate(date.getDate() - 3)
         date.setHours(0)
         date.setMinutes(0)
         date.setSeconds(0)
@@ -76,7 +97,7 @@ export default {
       type: String,
       default () {
         const date = new Date()
-        date.setDate(date.getDate() + 1)
+        date.setDate(date.getDate() + 3)
         date.setHours(23)
         date.setMinutes(59)
         date.setSeconds(59)
@@ -96,16 +117,30 @@ export default {
   },
 
   computed: {
-    hoursOfTerm () {
-      return (this.toTime - this.fromTime) / 1000 / 60 / 60
-    },
-
     fromTime () {
       return new Date(this.from).getTime()
     },
 
     toTime () {
       return new Date(this.to).getTime()
+    },
+
+    datesInTerm () {
+      const results = []
+      for (let i = 0; i < this.dateOfTerm; i++) {
+        const date = new Date(this.from)
+        date.setDate(date.getDate() + i)
+        results.push(date)
+      }
+      return results
+    },
+
+    dateOfTerm () {
+      return Math.round((this.toTime - this.fromTime) / 1000 / 60 / 60 / 24)
+    },
+
+    hoursOfTerm () {
+      return (this.toTime - this.fromTime) / 1000 / 60 / 60
     },
 
     rowSpan () {
@@ -171,6 +206,11 @@ export default {
   --gantt-chart-head-header-bg-color: #d0d0d0;
   --gantt-chart-head-header-fg-color: #303030;
 
+  /* 日付 */
+  --gantt-chart-date-bg-color: #d0d0d0;
+  --gantt-chart-date-fg-color: #303030;
+  --gantt-chart-date-separator-color: #c0c0c0;
+
   /* ボディヘッダー */
   --gantt-chart-body-header-bg-color: #e0e0e0;
   --gantt-chart-body-header-fg-color: #202020;
@@ -194,6 +234,10 @@ export default {
 
 <style scoped>
 .gantt-chart {
+  overflow-y: scroll;
+}
+
+table {
   background-color: var(--gantt-chart-border-color);
   border-spacing: 1px;
   width: 100%;
@@ -202,12 +246,37 @@ export default {
 thead th {
   background-color: var(--gantt-chart-head-header-bg-color);
   padding: 0.5em 1em;
-  user-select: none;
 }
 
 .head-header-content {
   color: var(--gantt-chart-head-header-fg-color);
+  user-select: none;
   white-space: pre;
+}
+
+thead td {
+  background-color: var(--gantt-chart-date-bg-color);
+  padding: 0;
+
+  /* 縦の分割線 */
+  background-image:
+    repeating-linear-gradient(90deg, var(--gantt-chart-date-separator-color), var(--gantt-chart-date-separator-color) 1px, transparent 1px, transparent var(--gantt-chart-v-main-separator-width));
+  background-position: -1px 0;
+  background-size: auto auto;
+}
+
+.date-container {
+  display: grid;
+}
+
+.date {
+  color: var(--gantt-chart-date-fg-color);
+  overflow: hidden;
+  padding: 0.5em 1em;
+  text-align: center;
+  text-overflow: ellipsis;
+  user-select: none;
+  white-space: pre-line;
 }
 
 tbody th {
