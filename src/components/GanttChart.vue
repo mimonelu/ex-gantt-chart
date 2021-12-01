@@ -17,13 +17,13 @@
           </th>
           <td>
             <div
-              class="date-container"
+              class="date"
               :style="`grid-template-columns: repeat(${dateOfTerm}, 1fr);`"
             >
               <div
                 v-for="date, dateIndex of datesInTerm"
-                :key="`date-${dateIndex}`"
-                class="date"
+                :key="`date-content-${dateIndex}`"
+                class="date-content"
               >{{ dateFormatter(date) }}</div>
             </div>
           </td>
@@ -32,7 +32,7 @@
       <tbody>
         <tr
           v-for="row, rowIndex in body"
-          :key="`row-${rowIndex}`"
+          :key="`body-row-${rowIndex}`"
         >
           <th
             v-for="header, headerIndex in row.headers"
@@ -179,19 +179,25 @@ export default {
   },
 
   mounted () {
-    for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
-      for (let barIndex = 0; barIndex < this.body[rowIndex].bars.length; barIndex++) {
-        if (!this.barVisible(rowIndex, barIndex)) {
-          continue
+    this.updateBarStyle()
+  },
+
+  methods: {
+    updateBarStyle () {
+      for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
+        for (let barIndex = 0; barIndex < this.body[rowIndex].bars.length; barIndex++) {
+          if (!this.barVisible(rowIndex, barIndex)) {
+            continue
+          }
+          const bar = this.body[rowIndex].bars[barIndex]
+          const barId = this.barId(rowIndex, barIndex)
+          const $bar = this.$el.querySelector(`[data-id="${barId}"]`)
+          const barFromTime = new Date(bar.from).getTime()
+          const barToTime = new Date(bar.to).getTime()
+          const left = (barFromTime - this.fromTime) / (this.toTime - this.fromTime) * 100
+          const width = (barToTime - barFromTime) / (this.toTime - this.fromTime) * 100
+          $bar.style = `left: ${left}%; width: ${width}%`
         }
-        const bar = this.body[rowIndex].bars[barIndex]
-        const barId = this.barId(rowIndex, barIndex)
-        const $bar = this.$el.querySelector(`[data-id="${barId}"]`)
-        const barFromTime = new Date(bar.from).getTime()
-        const barToTime = new Date(bar.to).getTime()
-        const left = (barFromTime - this.fromTime) / (this.toTime - this.fromTime) * 100
-        const width = (barToTime - barFromTime) / (this.toTime - this.fromTime) * 100
-        $bar.style = `left: ${left}%; width: ${width}%`
       }
     }
   }
@@ -265,11 +271,11 @@ thead td {
   background-size: auto auto;
 }
 
-.date-container {
+.date {
   display: grid;
 }
 
-.date {
+.date-content {
   color: var(--gantt-chart-date-fg-color);
   overflow: hidden;
   padding: 0.5em 1em;
