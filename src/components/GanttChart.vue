@@ -49,6 +49,9 @@
               class="bar"
               :data-id="barId(rowIndex, barIndex)"
               :data-visible="barVisible(rowIndex, barIndex).toString()"
+              @click="$emit('clickBar', bar)"
+              @mouseenter="$emit('mouseEnterBar', bar)"
+              @mouseleave="$emit('mouseLeaveBar', bar)"
             >
               <div class="bar-content">{{ bar.label }}</div>
             </div>

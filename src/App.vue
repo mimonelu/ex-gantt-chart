@@ -1,7 +1,12 @@
 <template>
   <div id="app">
     <h1>ExGanttChart</h1>
-    <GanttChart v-bind="ganttChartProps" />
+    <GanttChart
+      v-bind="ganttChartProps"
+      @clickBar="printBarEvent('clickBar', $event)"
+      @mouseEnterBar="printBarEvent('mouseEnterBar', $event)"
+      @mouseLeaveBar="printBarEvent('mouseLeaveBar', $event)"
+    />
   </div>
 </template>
 
@@ -84,6 +89,10 @@ export default {
 
     irandom (min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min
+    },
+
+    printBarEvent (eventName, bar) {
+      console.log(eventName, bar)
     }
   }
 }
