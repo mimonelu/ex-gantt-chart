@@ -60,10 +60,27 @@
 </template>
 
 <script>
+const makeFromDate = (dateString) => {
+  const date = new Date(dateString)
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+const makeToDate = (dateString) => {
+  const date = new Date(dateString)
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59)
+}
+
 export default {
   name: 'GanttChart',
 
   props: {
+    /*
+    ```
+    [
+      { label: 'Header\nThis is header in table head.' }, ...
+    ]
+    ```
+    */
     headers: {
       type: Array,
       required: true
@@ -76,6 +93,25 @@ export default {
       }
     },
 
+    /*
+    ```
+    [
+      {
+        headers: [
+          { label: 'Header\nThis is header in table body.' },
+          { rowSpan: true }
+        ],
+        bars: [
+          {
+            from: '2021/11/11 22:00:00',
+            to: '2021/11/12 9:00:00',
+            label: 'Bar\nThis is bar.'
+          }, ...
+        ]
+      }, ...
+    ]
+    ```
+    */
     body: {
       type: Array,
       required: true
@@ -86,10 +122,7 @@ export default {
       default () {
         const date = new Date()
         date.setDate(date.getDate() - 3)
-        date.setHours(0)
-        date.setMinutes(0)
-        date.setSeconds(0)
-        return date.toLocaleString()
+        return makeFromDate(date).toLocaleString()
       }
     },
 
@@ -98,10 +131,7 @@ export default {
       default () {
         const date = new Date()
         date.setDate(date.getDate() + 3)
-        date.setHours(23)
-        date.setMinutes(59)
-        date.setSeconds(59)
-        return date.toLocaleString()
+        return makeToDate(date).toLocaleString()
       }
     },
 
@@ -117,18 +147,26 @@ export default {
   },
 
   computed: {
+    fromDate () {
+      return makeFromDate(this.from)
+    },
+
+    toDate () {
+      return makeToDate(this.to)
+    },
+
     fromTime () {
-      return new Date(this.from).getTime()
+      return this.fromDate.getTime()
     },
 
     toTime () {
-      return new Date(this.to).getTime()
+      return this.toDate.getTime()
     },
 
     datesInTerm () {
       const results = []
       for (let i = 0; i < this.dateOfTerm; i++) {
-        const date = new Date(this.from)
+        const date = new Date(this.fromDate)
         date.setDate(date.getDate() + i)
         results.push(date)
       }
@@ -313,11 +351,11 @@ tbody td {
 
 .bar {
   background-color: var(--gantt-chart-bar-bg-color);
-  border-radius: 0.5em;
+  border-radius: 0.25em;
   box-sizing: border-box;
   margin: 0.25em 0;
   overflow: hidden;
-  padding: 0.5em 1em;
+  padding: 0.5em 0;
   position: relative;
 }
 .bar[data-visible="false"] {
@@ -326,6 +364,7 @@ tbody td {
 
 .bar-content {
   color: var(--gantt-chart-bar-fg-color);
+  padding: 0 0.5em;
   user-select: none;
 
   /* 折り返さない */

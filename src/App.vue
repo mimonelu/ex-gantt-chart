@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <h1>ExGanttChart</h1>
     <GanttChart v-bind="ganttChartProps" />
   </div>
 </template>
@@ -16,79 +17,94 @@ export default {
 
   data () {
     return {
-      ganttChartProps: {
-        from: '2021/11/07 00:00:00',
-        to: '2021/11/13 23:59:59',
+      ganttChartProps: this.makeData()
+    }
+  },
 
-        mainSeparatorSpan: 24,
-        subSeparatorSpan: 6,
+  methods: {
+    makeData () {
+      const from = new Date()
+      from.setDate(from.getDate() - 3)
+      from.setHours(0)
+      from.setMinutes(0)
+      from.setSeconds(0)
 
+      const to = new Date()
+      to.setDate(to.getDate() + 3)
+      to.setHours(23)
+      to.setMinutes(59)
+      to.setSeconds(59)
+
+      const body = []
+      for (let i = 0; i < 3; i++) {
+        const headers = [
+          { label: 'Body header 1' },
+          { label: 'Body header 2' }
+        ]
+        if (i >= 1) {
+          headers[0] = { rowSpan: true }
+        }
+
+        const bars = []
+        for (let j = 0; j < i + 1; j++) {
+          const barFrom = new Date(from)
+          barFrom.setHours(this.irandom(-6, 24 * 7 - 1))
+          const barTo = new Date(barFrom)
+          barTo.setHours(barTo.getHours() + this.irandom(6, 48))
+          bars.push({
+            from: barFrom.toLocaleString(),
+            to: barTo.toLocaleString(),
+            label: 'Bar'
+          })
+        }
+
+        body.push({
+          headers,
+          bars
+        })
+      }
+
+      const result = {
+        from: from.toLocaleString(),
+        to: to.toLocaleString(),
         headers: [
           { label: 'Head header 1' },
           { label: 'Head header 2' }
         ],
-
+        body,
+        mainSeparatorSpan: 24,
+        subSeparatorSpan: 6,
         dateFormatter (date) {
           const days = ['日', '月', '火', '水', '木', '金', '土']
           return `${date.getMonth() + 1}/${date.getDate()} (${days[date.getDay()]})`
-        },
-
-        body: [
-          {
-            headers: [
-              { label: 'Body header 1' },
-              { label: 'Body header 2-1' }
-            ],
-            bars: [
-              {
-                from: '2021/11/11 22:00:00',
-                to: '2021/11/12 9:00:00',
-                label: 'Bar'
-              }
-            ]
-          },
-          {
-            headers: [
-              { rowSpan: true },
-              { label: 'Body header 2-2' }
-            ],
-            bars: [
-              {
-                from: '2021/11/12 12:00:00',
-                to: '2021/11/12 15:00:00',
-                label: 'Bar 2-2-a'
-              },
-              {
-                from: '2021/11/12 15:30:00',
-                to: '2021/11/13 19:30:00',
-                label: 'Bar 2-2-b'
-              },
-              {
-                from: '2021/11/13 14:00:00',
-                to: '2021/11/15 18:00:00',
-                label: 'Bar 2-2-c'
-              }
-            ]
-          },
-          {
-            headers: [
-              { rowSpan: true },
-              { label: 'Body header 2-3' }
-            ],
-            bars: [
-              {
-                from: '2021/11/12 18:00:00',
-                to: '2021/11/13 01:30:00',
-                label: 'Bar 2-3-a'
-              }
-            ]
-          }
-        ]
+        }
       }
+      return result
+    },
+
+    irandom (min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min
     }
   }
 }
 </script>
 
 <style>
+:root {
+  font-size: 16px;
+}
+
+body {
+  background-color: #102030;
+  color: #f0f0f0;
+  font-family: monospace;
+  margin: 2rem;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: normal;
+  line-height: 2rem;
+  margin: 0 0 2rem;
+}
 </style>
