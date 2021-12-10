@@ -9,12 +9,14 @@
     <table>
       <thead>
         <tr>
-          <th
-            v-for="header, headerIndex in headers"
-            :key="`head-header-${headerIndex}`"
-          >
-            <div class="head-header-content">{{ header.label }}</div>
-          </th>
+          <template v-if="!invisibleHeaders">
+            <th
+              v-for="header, headerIndex in headers"
+              :key="`head-header-${headerIndex}`"
+            >
+              <div class="head-header-content">{{ header.label }}</div>
+            </th>
+          </template>
           <td>
             <div
               class="date"
@@ -34,14 +36,16 @@
           v-for="row, rowIndex in body"
           :key="`body-row-${rowIndex}`"
         >
-          <th
-            v-for="header, headerIndex in row.headers"
-            :key="`body-header-${rowIndex}-${headerIndex}`"
-            :rowspan="rowSpan(rowIndex, headerIndex)"
-            :style="{ display: header.rowSpan ? 'none': '' }"
-          >
-            <div class="body-header-content">{{ header.label }}</div>
-          </th>
+          <template v-if="!invisibleHeaders">
+            <th
+              v-for="header, headerIndex in row.headers"
+              :key="`body-header-${rowIndex}-${headerIndex}`"
+              :rowspan="rowSpan(rowIndex, headerIndex)"
+              :style="{ display: header.rowSpan ? 'none': '' }"
+            >
+              <div class="body-header-content">{{ header.label }}</div>
+            </th>
+          </template>
           <td>
             <div
               v-for="bar, barIndex in row.bars"
@@ -49,9 +53,9 @@
               :class="`bar${bar.classes ? ' ' + bar.classes : ''}`"
               :data-id="barId(rowIndex, barIndex)"
               :data-visible="barVisible(rowIndex, barIndex).toString()"
-              @click="!bar.disableToClick && $emit('clickBar', bar)"
-              @mouseenter="!bar.disableToMouseEnter && $emit('mouseEnterBar', bar)"
-              @mouseleave="!bar.disableToMouseLeave && $emit('mouseLeaveBar', bar)"
+              @click="!bar.disableOnClick && $emit('clickBar', bar)"
+              @mouseenter="!bar.disableOnMouseEnter && $emit('mouseEnterBar', bar)"
+              @mouseleave="!bar.disableOnMouseLeave && $emit('mouseLeaveBar', bar)"
             >
               <div class="bar-content">{{ bar.label }}</div>
             </div>
@@ -87,6 +91,11 @@ export default {
       required: true
     },
 
+    invisibleHeaders: {
+      type: Boolean,
+      default: false
+    },
+
     dateFormatter: {
       type: Function,
       default (date) {
@@ -108,9 +117,9 @@ export default {
             to: Date,
             label: 'Bar\nThis is bar.',
             classes: 'className',
-            disableToClick: false,
-            disableToMouseEnter: false,
-            disableToMouseLeave: false
+            disableOnClick: false,
+            disableOnMouseEnter: false,
+            disableOnMouseLeave: false
           }, ...
         ]
       }, ...

@@ -68,9 +68,9 @@ export default {
             to: barTo,
             label: `Bar ${i + 1}-${j + 1}`,
             classes: 'hoge fuga',
-            disableToClick: false,
-            disableToMouseEnter: false,
-            disableToMouseLeave: false
+            disableOnClick: false,
+            disableOnMouseEnter: false,
+            disableOnMouseLeave: false
           })
         }
 
@@ -87,6 +87,7 @@ export default {
           { label: 'Head header 1' },
           { label: 'Head header 2' }
         ],
+        invisibleHeaders: false,
         body,
         disableParallel: false,
         mainSeparatorSpan: 24,
