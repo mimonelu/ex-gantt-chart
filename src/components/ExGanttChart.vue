@@ -1,9 +1,9 @@
 <template>
   <div
-    class="gantt-chart"
+    class="ex-gantt-chart"
     :style="{
-      '--gantt-chart-v-main-separator-width': `calc(100% / ${hoursOfTerm / mainSeparatorSpan})`,
-      '--gantt-chart-v-sub-separator-width': `calc(100% / ${hoursOfTerm / subSeparatorSpan})`,
+      '--ex-gantt-chart-v-main-separator-width': `calc(100% / ${hoursOfTerm / mainSeparatorSpan})`,
+      '--ex-gantt-chart-v-sub-separator-width': `calc(100% / ${hoursOfTerm / subSeparatorSpan})`,
     }"
   >
     <table>
@@ -46,12 +46,12 @@
             <div
               v-for="bar, barIndex in row.bars"
               :key="barId(rowIndex, barIndex)"
-              class="bar"
+              :class="`bar${bar.classes ? ' ' + bar.classes : ''}`"
               :data-id="barId(rowIndex, barIndex)"
               :data-visible="barVisible(rowIndex, barIndex).toString()"
-              @click="$emit('clickBar', bar)"
-              @mouseenter="$emit('mouseEnterBar', bar)"
-              @mouseleave="$emit('mouseLeaveBar', bar)"
+              @click="!bar.disableToClick && $emit('clickBar', bar)"
+              @mouseenter="!bar.disableToMouseEnter && $emit('mouseEnterBar', bar)"
+              @mouseleave="!bar.disableToMouseLeave && $emit('mouseLeaveBar', bar)"
             >
               <div class="bar-content">{{ bar.label }}</div>
             </div>
@@ -63,18 +63,16 @@
 </template>
 
 <script>
-const makeFromDate = (dateString) => {
-  const date = new Date(dateString)
+const makeFromDate = (date) => {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
-const makeToDate = (dateString) => {
-  const date = new Date(dateString)
+const makeToDate = (date) => {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59)
 }
 
 export default {
-  name: 'GanttChart',
+  name: 'ExGanttChart',
 
   props: {
     /*
@@ -106,9 +104,13 @@ export default {
         ],
         bars: [
           {
-            from: '2021/11/11 22:00:00',
-            to: '2021/11/12 9:00:00',
-            label: 'Bar\nThis is bar.'
+            from: Date,
+            to: Date,
+            label: 'Bar\nThis is bar.',
+            classes: 'className',
+            disableToClick: false,
+            disableToMouseEnter: false,
+            disableToMouseLeave: false
           }, ...
         ]
       }, ...
@@ -121,20 +123,20 @@ export default {
     },
 
     from: {
-      type: String,
+      type: Date,
       default () {
         const date = new Date()
         date.setDate(date.getDate() - 3)
-        return makeFromDate(date).toLocaleString()
+        return makeFromDate(date)
       }
     },
 
     to: {
-      type: String,
+      type: Date,
       default () {
         const date = new Date()
         date.setDate(date.getDate() + 3)
-        return makeToDate(date).toLocaleString()
+        return makeToDate(date)
       }
     },
 
@@ -209,8 +211,8 @@ export default {
     barVisible () {
       return (rowIndex, barIndex) => {
         const bar = this.body[rowIndex].bars[barIndex]
-        const barFromTime = new Date(bar.from).getTime()
-        const barToTime = new Date(bar.to).getTime()
+        const barFromTime = bar.from.getTime()
+        const barToTime = bar.to.getTime()
         return (
           (this.fromTime <= barFromTime && this.toTime >= barFromTime) ||
           (this.fromTime <= barToTime && this.toTime >= barToTime)
@@ -232,12 +234,12 @@ export default {
           }
           const bar = this.body[rowIndex].bars[barIndex]
           const barId = this.barId(rowIndex, barIndex)
-          const $bar = this.$el.querySelector(`[data-id="${barId}"]`)
-          const barFromTime = new Date(bar.from).getTime()
-          const barToTime = new Date(bar.to).getTime()
+          const barElement = this.$el.querySelector(`[data-id="${barId}"]`)
+          const barFromTime = bar.from.getTime()
+          const barToTime = bar.to.getTime()
           const left = (barFromTime - this.fromTime) / (this.toTime - this.fromTime) * 100
           const width = (barToTime - barFromTime) / (this.toTime - this.fromTime) * 100
-          $bar.style = `left: ${left}%; width: ${width}%`
+          barElement.style = `left: ${left}%; width: ${width}%`
         }
       }
     }
@@ -246,68 +248,68 @@ export default {
 </script>
 
 <style>
-.gantt-chart {
-  --gantt-chart-border-color: #c0c0c0;
+.ex-gantt-chart {
+  --ex-gantt-chart-border-color: #c0c0c0;
 
   /* ヘッドヘッダー */
-  --gantt-chart-head-header-bg-color: #d0d0d0;
-  --gantt-chart-head-header-fg-color: #303030;
+  --ex-gantt-chart-head-header-bg-color: #d0d0d0;
+  --ex-gantt-chart-head-header-fg-color: #303030;
 
   /* 日付 */
-  --gantt-chart-date-bg-color: #d0d0d0;
-  --gantt-chart-date-fg-color: #303030;
-  --gantt-chart-date-separator-color: #c0c0c0;
+  --ex-gantt-chart-date-bg-color: #d0d0d0;
+  --ex-gantt-chart-date-fg-color: #303030;
+  --ex-gantt-chart-date-separator-color: #c0c0c0;
 
   /* ボディヘッダー */
-  --gantt-chart-body-header-bg-color: #e0e0e0;
-  --gantt-chart-body-header-fg-color: #202020;
+  --ex-gantt-chart-body-header-bg-color: #e0e0e0;
+  --ex-gantt-chart-body-header-fg-color: #202020;
 
   /* ボディデータ */
-  --gantt-chart-body-data-bg-color: #f0f0f0;
+  --ex-gantt-chart-body-data-bg-color: #f0f0f0;
 
   /* 縦のメイン分割線 */
-  --gantt-chart-v-main-separator-color: #c0c0c0;
-  --gantt-chart-v-main-separator-width: calc(100% / 24); /* スクリプト制御 */
+  --ex-gantt-chart-v-main-separator-color: #c0c0c0;
+  --ex-gantt-chart-v-main-separator-width: calc(100% / 24); /* スクリプト制御 */
 
   /* 縦のサブ分割線 */
-  --gantt-chart-v-sub-separator-color: #e0e0e0;
-  --gantt-chart-v-sub-separator-width: calc(100% / 48); /* スクリプト制御 */
+  --ex-gantt-chart-v-sub-separator-color: #e0e0e0;
+  --ex-gantt-chart-v-sub-separator-width: calc(100% / 48); /* スクリプト制御 */
 
   /* バー */
-  --gantt-chart-bar-bg-color: #0080f0;
-  --gantt-chart-bar-fg-color: #f0f0f0;
+  --ex-gantt-chart-bar-bg-color: #0080f0;
+  --ex-gantt-chart-bar-fg-color: #f0f0f0;
 }
 </style>
 
 <style scoped>
-.gantt-chart {
+.ex-gantt-chart {
   overflow-y: scroll;
 }
 
 table {
-  background-color: var(--gantt-chart-border-color);
+  background-color: var(--ex-gantt-chart-border-color);
   border-spacing: 1px;
   width: 100%;
 }
 
 thead th {
-  background-color: var(--gantt-chart-head-header-bg-color);
+  background-color: var(--ex-gantt-chart-head-header-bg-color);
   padding: 0.5em 1em;
 }
 
 .head-header-content {
-  color: var(--gantt-chart-head-header-fg-color);
+  color: var(--ex-gantt-chart-head-header-fg-color);
   user-select: none;
   white-space: pre;
 }
 
 thead td {
-  background-color: var(--gantt-chart-date-bg-color);
+  background-color: var(--ex-gantt-chart-date-bg-color);
   padding: 0;
 
   /* 縦の分割線 */
   background-image:
-    repeating-linear-gradient(90deg, var(--gantt-chart-date-separator-color), var(--gantt-chart-date-separator-color) 1px, transparent 1px, transparent var(--gantt-chart-v-main-separator-width));
+    repeating-linear-gradient(90deg, var(--ex-gantt-chart-date-separator-color), var(--ex-gantt-chart-date-separator-color) 1px, transparent 1px, transparent var(--ex-gantt-chart-v-main-separator-width));
   background-position: -1px 0;
   background-size: auto auto;
 }
@@ -317,7 +319,7 @@ thead td {
 }
 
 .date-content {
-  color: var(--gantt-chart-date-fg-color);
+  color: var(--ex-gantt-chart-date-fg-color);
   overflow: hidden;
   padding: 0.5em 1em;
   text-align: center;
@@ -327,18 +329,18 @@ thead td {
 }
 
 tbody th {
-  background-color: var(--gantt-chart-body-header-bg-color);
+  background-color: var(--ex-gantt-chart-body-header-bg-color);
   padding: 0.5em 1em;
   user-select: none;
 }
 
 .body-header-content {
-  color: var(--gantt-chart-body-header-fg-color);
+  color: var(--ex-gantt-chart-body-header-fg-color);
   white-space: pre;
 }
 
 tbody td {
-  background-color: var(--gantt-chart-body-data-bg-color);
+  background-color: var(--ex-gantt-chart-body-data-bg-color);
   overflow-x: hidden;
   padding: 0;
   position: relative;
@@ -346,14 +348,14 @@ tbody td {
 
   /* 縦の分割線 */
   background-image:
-    repeating-linear-gradient(90deg, var(--gantt-chart-v-main-separator-color), var(--gantt-chart-v-main-separator-color) 1px, transparent 1px, transparent var(--gantt-chart-v-main-separator-width)),
-    repeating-linear-gradient(90deg, var(--gantt-chart-v-sub-separator-color), var(--gantt-chart-v-sub-separator-color) 1px, transparent 1px, transparent var(--gantt-chart-v-sub-separator-width));
+    repeating-linear-gradient(90deg, var(--ex-gantt-chart-v-main-separator-color), var(--ex-gantt-chart-v-main-separator-color) 1px, transparent 1px, transparent var(--ex-gantt-chart-v-main-separator-width)),
+    repeating-linear-gradient(90deg, var(--ex-gantt-chart-v-sub-separator-color), var(--ex-gantt-chart-v-sub-separator-color) 1px, transparent 1px, transparent var(--ex-gantt-chart-v-sub-separator-width));
   background-position: -1px 0;
   background-size: auto auto;
 }
 
 .bar {
-  background-color: var(--gantt-chart-bar-bg-color);
+  background-color: var(--ex-gantt-chart-bar-bg-color);
   border-radius: 0.25em;
   box-sizing: border-box;
   margin: 0.25em 0;
@@ -366,7 +368,7 @@ tbody td {
 }
 
 .bar-content {
-  color: var(--gantt-chart-bar-fg-color);
+  color: var(--ex-gantt-chart-bar-fg-color);
   padding: 0 0.5em;
   user-select: none;
 
