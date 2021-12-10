@@ -46,13 +46,20 @@
               <div class="body-header-content">{{ header.label }}</div>
             </th>
           </template>
-          <td>
+          <td
+            @dragenter.prevent
+            @dragover.prevent
+            @drop="!row.disableDrop && onDrop($event, rowIndex)"
+          >
             <div
               v-for="bar, barIndex in row.bars"
               :key="barId(rowIndex, barIndex)"
+              :ref="barId(rowIndex, barIndex)"
               :class="`bar${bar.classes ? ' ' + bar.classes : ''}`"
               :data-id="barId(rowIndex, barIndex)"
               :data-visible="barVisible(rowIndex, barIndex).toString()"
+              :draggable="bar.disableDrag != null ? !bar.disableDrag : !disableDrag"
+              @dragstart="onDragStart($event, rowIndex, barIndex)"
               @click="!bar.disableOnClick && $emit('clickBar', bar)"
               @mouseenter="!bar.disableOnMouseEnter && $emit('mouseEnterBar', bar)"
               @mouseleave="!bar.disableOnMouseLeave && $emit('mouseLeaveBar', bar)"
@@ -67,6 +74,8 @@
 </template>
 
 <script>
+const DD_MIME = 'application/ikzo-bar-index'
+
 const makeFromDate = (date) => {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
@@ -118,11 +127,14 @@ export default {
             label: 'Bar\nThis is bar.',
             classes: 'className',
             invisible: false,
+            disableDrag: false,
+            disableMove: false,
             disableOnClick: false,
             disableOnMouseEnter: false,
             disableOnMouseLeave: false
           }, ...
-        ]
+        ],
+        disableDrop: false
       }, ...
     ]
     ```
@@ -151,6 +163,16 @@ export default {
     },
 
     disableParallel: {
+      type: Boolean,
+      default: false
+    },
+
+    disableDrag: {
+      type: Boolean,
+      default: false
+    },
+
+    disableMove: {
       type: Boolean,
       default: false
     },
@@ -193,12 +215,16 @@ export default {
       return results
     },
 
+    timeOfTerm () {
+      return this.toTime - this.fromTime
+    },
+
     dateOfTerm () {
-      return Math.round((this.toTime - this.fromTime) / 1000 / 60 / 60 / 24)
+      return Math.round(this.timeOfTerm / 1000 / 60 / 60 / 24)
     },
 
     hoursOfTerm () {
-      return (this.toTime - this.fromTime) / 1000 / 60 / 60
+      return this.timeOfTerm / 1000 / 60 / 60
     },
 
     rowSpan () {
@@ -253,8 +279,9 @@ export default {
           const barToTime = bar.to.getTime()
 
           // バーのポジショニングとリサイズ
-          const left = (barFromTime - this.fromTime) / (this.toTime - this.fromTime) * 100
-          const width = (barToTime - barFromTime) / (this.toTime - this.fromTime) * 100
+          const left = (barFromTime - this.fromTime) / this.timeOfTerm * 100
+          const width = (barToTime - barFromTime) / this.timeOfTerm * 100
+          barElement.style.position = 'relative'
           barElement.style.left = `${left}%`
           barElement.style.width = `${width}%`
 
@@ -282,6 +309,39 @@ export default {
             visibleBarIndex++
           }
         }
+      }
+    },
+
+    onDragStart (event, rowIndex, barIndex) {
+      event.dataTransfer.dropEffect = 'move'
+      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.setData(DD_MIME, JSON.stringify({ rowIndex, barIndex, offset: event.offsetX }))
+    },
+
+    onDrop (event, targetIndex) {
+      if (event.dataTransfer.types.includes(DD_MIME)) {
+        event.preventDefault()
+        const json = event.dataTransfer.getData(DD_MIME)
+        const data = JSON.parse(json)
+        const bar = this.body[data.rowIndex].bars[data.barIndex]
+
+        // バーの移動が許可されている場合、ドロップできる要素は td 要素のみに制限
+        if ((bar.disableMove != null ? !bar.disableMove : !this.disableMove) && event.target.tagName !== 'TD') {
+          return
+        }
+
+        // バーの移動
+        if (bar.disableMove != null ? !bar.disableMove : !this.disableMove) {
+          const positionRatio = (event.offsetX - data.offset) / event.target.clientWidth
+          const fromTime = (this.timeOfTerm * positionRatio) + this.fromTime
+          const toTime = (bar.to.getTime() - bar.from.getTime()) + fromTime
+          bar.from.setTime(fromTime)
+          bar.to.setTime(toTime)
+        }
+
+        this.body[targetIndex].bars.push(bar)
+        this.body[data.rowIndex].bars.splice(data.barIndex, 1)
+        this.$nextTick(this.updateBarStyle)
       }
     }
   }

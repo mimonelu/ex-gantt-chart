@@ -70,6 +70,8 @@ export default {
             label: `Bar ${i + 1}-${j + 1}`,
             classes: 'hoge fuga',
             invisible: false,
+            disableDrag: false,
+            disableMove: false,
             disableOnClick: false,
             disableOnMouseEnter: false,
             disableOnMouseLeave: false
@@ -78,7 +80,8 @@ export default {
 
         body.push({
           headers,
-          bars
+          bars,
+          disableDrop: false
         })
       }
 
@@ -92,6 +95,8 @@ export default {
         invisibleHeaders: false,
         body,
         disableParallel: false,
+        disableDrag: false,
+        disableMove: false,
         mainSeparatorSpan: 24,
         subSeparatorSpan: 6,
         dateFormatter (date) {
