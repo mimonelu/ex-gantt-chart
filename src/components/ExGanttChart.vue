@@ -140,6 +140,11 @@ export default {
       }
     },
 
+    disableParallel: {
+      type: Boolean,
+      default: false
+    },
+
     mainSeparatorSpan: {
       type: Number,
       default: 24
@@ -228,11 +233,12 @@ export default {
   methods: {
     updateBarStyle () {
       for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
-        for (let barIndex = 0; barIndex < this.body[rowIndex].bars.length; barIndex++) {
+        const bars = this.body[rowIndex].bars
+        for (let barIndex = 0, visibleBarIndex = 0; barIndex < bars.length; barIndex++) {
           if (!this.barVisible(rowIndex, barIndex)) {
             continue
           }
-          const bar = this.body[rowIndex].bars[barIndex]
+          const bar = bars[barIndex]
           const barId = this.barId(rowIndex, barIndex)
           const barElement = this.$el.querySelector(`[data-id="${barId}"]`)
           const barFromTime = bar.from.getTime()
@@ -240,6 +246,30 @@ export default {
           const left = (barFromTime - this.fromTime) / (this.toTime - this.fromTime) * 100
           const width = (barToTime - barFromTime) / (this.toTime - this.fromTime) * 100
           barElement.style = `left: ${left}%; width: ${width}%`
+
+          // バーの並列化
+          if (!this.disableParallel) {
+            if (visibleBarIndex >= 1) {
+              let collided = false
+              for (let targetIndex = 0; targetIndex < barIndex; targetIndex++) {
+                if (!this.barVisible(rowIndex, targetIndex)) {
+                  continue
+                }
+                const targetBar = bars[targetIndex]
+                const targetBarFromTime = targetBar.from.getTime()
+                const targetBarToTime = targetBar.to.getTime()
+                if (targetBarFromTime <= barToTime && barFromTime <= targetBarToTime) {
+                  collided = true
+                  break
+                }
+              }
+              if (collided === false) {
+                barElement.style.position = 'absolute'
+                barElement.style.top = '0px'
+              }
+            }
+            visibleBarIndex++
+          }
         }
       }
     }

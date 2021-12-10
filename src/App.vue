@@ -88,6 +88,7 @@ export default {
           { label: 'Head header 2' }
         ],
         body,
+        disableParallel: false,
         mainSeparatorSpan: 24,
         subSeparatorSpan: 6,
         dateFormatter (date) {
