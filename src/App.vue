@@ -2,6 +2,7 @@
   <div id="app">
     <h1>ExGanttChart</h1>
     <ExGanttChart
+      ref="ganttChart"
       v-bind="exGanttChartProps"
       @clickBar="onClickBar"
       @mouseEnterBar="onMouseEnterBar"

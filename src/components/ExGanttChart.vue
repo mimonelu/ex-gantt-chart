@@ -218,9 +218,7 @@ export default {
     },
 
     barId () {
-      return (rowIndex, barIndex) => {
-        return `bar-${rowIndex}-${barIndex}`
-      }
+      return (rowIndex, barIndex) => `bar-${rowIndex}-${barIndex}`
     },
 
     barVisible () {
@@ -231,10 +229,7 @@ export default {
         }
         const barFromTime = bar.from.getTime()
         const barToTime = bar.to.getTime()
-        return (
-          (this.fromTime <= barFromTime && this.toTime >= barFromTime) ||
-          (this.fromTime <= barToTime && this.toTime >= barToTime)
-        )
+        return barFromTime <= this.toTime && this.fromTime <= barToTime
       }
     }
   },
@@ -256,6 +251,8 @@ export default {
           const barElement = this.$el.querySelector(`[data-id="${barId}"]`)
           const barFromTime = bar.from.getTime()
           const barToTime = bar.to.getTime()
+
+          // バーのポジショニングとリサイズ
           const left = (barFromTime - this.fromTime) / (this.toTime - this.fromTime) * 100
           const width = (barToTime - barFromTime) / (this.toTime - this.fromTime) * 100
           barElement.style.left = `${left}%`
@@ -385,7 +382,7 @@ tbody th {
 
 tbody td {
   background-color: var(--ex-gantt-chart-body-data-bg-color);
-  overflow-x: hidden;
+  overflow: hidden;
   padding: 0;
   position: relative;
   width: 100%;
