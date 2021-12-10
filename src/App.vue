@@ -68,6 +68,7 @@ export default {
             to: barTo,
             label: `Bar ${i + 1}-${j + 1}`,
             classes: 'hoge fuga',
+            invisible: false,
             disableOnClick: false,
             disableOnMouseEnter: false,
             disableOnMouseLeave: false

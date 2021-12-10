@@ -117,6 +117,7 @@ export default {
             to: Date,
             label: 'Bar\nThis is bar.',
             classes: 'className',
+            invisible: false,
             disableOnClick: false,
             disableOnMouseEnter: false,
             disableOnMouseLeave: false
@@ -225,6 +226,9 @@ export default {
     barVisible () {
       return (rowIndex, barIndex) => {
         const bar = this.body[rowIndex].bars[barIndex]
+        if (bar.invisible) {
+          return false
+        }
         const barFromTime = bar.from.getTime()
         const barToTime = bar.to.getTime()
         return (
@@ -254,7 +258,8 @@ export default {
           const barToTime = bar.to.getTime()
           const left = (barFromTime - this.fromTime) / (this.toTime - this.fromTime) * 100
           const width = (barToTime - barFromTime) / (this.toTime - this.fromTime) * 100
-          barElement.style = `left: ${left}%; width: ${width}%`
+          barElement.style.left = `${left}%`
+          barElement.style.width = `${width}%`
 
           // バーの並列化
           if (!this.disableParallel) {
@@ -274,7 +279,7 @@ export default {
               }
               if (collided === false) {
                 barElement.style.position = 'absolute'
-                barElement.style.top = '0px'
+                barElement.style.top = '0'
               }
             }
             visibleBarIndex++
