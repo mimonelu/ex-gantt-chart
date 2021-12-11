@@ -97,6 +97,7 @@ export default {
         disableParallel: false,
         disableDrag: false,
         disableMove: false,
+        dropToFirst: false,
         mainSeparatorSpan: 24,
         subSeparatorSpan: 6,
         dateFormatter (date) {

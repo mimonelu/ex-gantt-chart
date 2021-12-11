@@ -178,6 +178,11 @@ export default {
       default: false
     },
 
+    dropToFirst: {
+      type: Boolean,
+      default: false
+    },
+
     mainSeparatorSpan: {
       type: Number,
       default: 24
@@ -293,8 +298,9 @@ export default {
         }
       }
 
-      // バーの並列化
+      // バーの並列化とテーブル高の設定
       if (!this.disableParallel) {
+        // バーの並列化
         for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
           const bars = this.body[rowIndex].bars
           const topGroups = { 0: [bars[0]] }
@@ -348,7 +354,7 @@ export default {
           }
         }
 
-        // テーブル行の高さを設定
+        // テーブル高の設定
         for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
           const bars = this.body[rowIndex].bars
           let bottom = 0
@@ -393,8 +399,16 @@ export default {
           bar.to.setTime(toTime)
         }
 
-        this.body[targetIndex].bars.push(bar)
-        this.body[data.rowIndex].bars.splice(data.barIndex, 1)
+        // バーデータの移動
+        if (targetIndex !== data.rowIndex) {
+          if (this.dropToFirst) {
+            this.body[targetIndex].bars.unshift(bar)
+          } else {
+            this.body[targetIndex].bars.push(bar)
+          }
+          this.body[data.rowIndex].bars.splice(data.barIndex, 1)
+        }
+
         this.$nextTick(this.updateBarStyle)
       }
     }
