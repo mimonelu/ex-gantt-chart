@@ -47,6 +47,7 @@
             </th>
           </template>
           <td
+            :ref="`td-${rowIndex}`"
             @dragenter.prevent
             @dragover.prevent
             @drop="!row.disableDrop && onDrop($event, rowIndex)"
@@ -56,7 +57,7 @@
               :key="barId(rowIndex, barIndex)"
               :ref="barId(rowIndex, barIndex)"
               :class="`bar${bar.classes ? ' ' + bar.classes : ''}`"
-              :data-id="barId(rowIndex, barIndex)"
+              :data-bar-id="barId(rowIndex, barIndex)"
               :data-visible="barVisible(rowIndex, barIndex).toString()"
               :draggable="bar.disableDrag != null ? !bar.disableDrag : !disableDrag"
               @dragstart="onDragStart($event, rowIndex, barIndex)"
@@ -265,35 +266,66 @@ export default {
   },
 
   methods: {
-    updateBarStyle () {
+    wait (duration) {
+      return new Promise((resolve) => {
+        setTimeout(resolve, duration)
+      })
+    },
+
+    async updateBarStyle () {
+      // バーのポジショニングとリサイズ
       for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
         const bars = this.body[rowIndex].bars
-        for (let barIndex = 0, visibleBarIndex = 0; barIndex < bars.length; barIndex++) {
+        for (let barIndex = 0; barIndex < bars.length; barIndex++) {
           if (!this.barVisible(rowIndex, barIndex)) {
             continue
           }
           const bar = bars[barIndex]
           const barId = this.barId(rowIndex, barIndex)
-          const barElement = this.$el.querySelector(`[data-id="${barId}"]`)
+          const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
           const barFromTime = bar.from.getTime()
           const barToTime = bar.to.getTime()
-
-          // バーのポジショニングとリサイズ
           const left = (barFromTime - this.fromTime) / this.timeOfTerm * 100
           const width = (barToTime - barFromTime) / this.timeOfTerm * 100
           barElement.style.position = 'relative'
           barElement.style.left = `${left}%`
           barElement.style.width = `${width}%`
+        }
+      }
 
-          // バーの並列化
-          if (!this.disableParallel) {
-            if (visibleBarIndex >= 1) {
+      // バーの並列化
+      if (!this.disableParallel) {
+        for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
+          const bars = this.body[rowIndex].bars
+          const topGroups = { 0: [bars[0]] }
+          for (let barIndex = 1; barIndex < bars.length; barIndex++) {
+            if (!this.barVisible(rowIndex, barIndex)) {
+              continue
+            }
+            const bar = bars[barIndex]
+            const barFromTime = bar.from.getTime()
+            const barToTime = bar.to.getTime()
+
+            let top = 0
+            for (let targetIndex = 0; targetIndex < barIndex; targetIndex++) {
+              if (!this.barVisible(rowIndex, targetIndex)) {
+                continue
+              }
+              const targetBar = bars[targetIndex]
+              const targetBarFromTime = targetBar.from.getTime()
+              const targetBarToTime = targetBar.to.getTime()
+              if (targetBarFromTime <= barToTime && barFromTime <= targetBarToTime) {
+                const targetBarId = this.barId(rowIndex, targetIndex)
+                const targetBarElement = this.$el.querySelector(`[data-bar-id="${targetBarId}"]`)
+                const targetBottom = targetBarElement.offsetTop + targetBarElement.offsetHeight
+                top = Math.max(top, targetBottom)
+              }
+            }
+
+            const tops = Object.keys(topGroups)
+            for (let i = 0; i < tops.length; i++) {
               let collided = false
-              for (let targetIndex = 0; targetIndex < barIndex; targetIndex++) {
-                if (!this.barVisible(rowIndex, targetIndex)) {
-                  continue
-                }
-                const targetBar = bars[targetIndex]
+              for (const targetBar of topGroups[tops[i]]) {
                 const targetBarFromTime = targetBar.from.getTime()
                 const targetBarToTime = targetBar.to.getTime()
                 if (targetBarFromTime <= barToTime && barFromTime <= targetBarToTime) {
@@ -302,12 +334,34 @@ export default {
                 }
               }
               if (collided === false) {
-                barElement.style.position = 'absolute'
-                barElement.style.top = '0'
+                top = tops[i]
+                break
               }
             }
-            visibleBarIndex++
+
+            const barId = this.barId(rowIndex, barIndex)
+            const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
+            barElement.style.position = 'absolute'
+            barElement.style.top = `${top}px`
+            topGroups[top] = topGroups[top] ?? []
+            topGroups[top].push(bar)
           }
+        }
+
+        // テーブル行の高さを設定
+        for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
+          const bars = this.body[rowIndex].bars
+          let bottom = 0
+          for (let barIndex = 0; barIndex < bars.length; barIndex++) {
+            if (!this.barVisible(rowIndex, barIndex)) {
+              continue
+            }
+            const barId = this.barId(rowIndex, barIndex)
+            const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
+            const barBottom = barElement.offsetTop + barElement.offsetHeight
+            bottom = Math.max(bottom, barBottom)
+          }
+          this.$refs[`td-${rowIndex}`][0].style.height = `${bottom}px`
         }
       }
     },
@@ -332,7 +386,7 @@ export default {
 
         // バーの移動
         if (bar.disableMove != null ? !bar.disableMove : !this.disableMove) {
-          const positionRatio = (event.offsetX - data.offset) / event.target.clientWidth
+          const positionRatio = (event.offsetX - data.offset) / event.target.offsetWidth
           const fromTime = (this.timeOfTerm * positionRatio) + this.fromTime
           const toTime = (bar.to.getTime() - bar.from.getTime()) + fromTime
           bar.from.setTime(fromTime)
@@ -443,9 +497,10 @@ tbody th {
 tbody td {
   background-color: var(--ex-gantt-chart-body-data-bg-color);
   overflow: hidden;
-  padding: 0;
+  padding: 0 0 0.25em 0;
   position: relative;
   width: 100%;
+  vertical-align: top;
 
   /* 縦の分割線 */
   background-image:
@@ -459,7 +514,7 @@ tbody td {
   background-color: var(--ex-gantt-chart-bar-bg-color);
   border-radius: 0.25em;
   box-sizing: border-box;
-  margin: 0.25em 0;
+  margin-top: 0.25em;
   overflow: hidden;
   padding: 0.5em 0;
   position: relative;

@@ -59,7 +59,7 @@ export default {
         }
 
         const bars = []
-        for (let j = 0; j < i + 1; j++) {
+        for (let j = 0; j < i * (i + 1) + 1; j++) {
           const barFrom = new Date(from)
           barFrom.setHours(this.irandom(-6, 24 * 7 - 1))
           const barTo = new Date(barFrom)
