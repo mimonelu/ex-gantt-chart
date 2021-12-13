@@ -1,10 +1,12 @@
 <template>
   <div
     class="ex-gantt-chart"
+    :data-resizing="resizing"
     :style="{
       '--ex-gantt-chart-v-main-separator-width': `calc(100% / ${hoursOfTerm / mainSeparatorSpan})`,
       '--ex-gantt-chart-v-sub-separator-width': `calc(100% / ${hoursOfTerm / subSeparatorSpan})`,
     }"
+    @mouseup="onMouseUp"
   >
     <table>
       <thead>
@@ -51,6 +53,7 @@
             @dragenter.prevent
             @dragover.prevent
             @drop="!row.disableDrop && onDrop($event, rowIndex)"
+            @mousemove="onMouseMove"
           >
             <div
               v-for="bar, barIndex in row.bars"
@@ -59,13 +62,21 @@
               :class="`bar${bar.classes ? ' ' + bar.classes : ''}`"
               :data-bar-id="barId(rowIndex, barIndex)"
               :data-visible="barVisible(rowIndex, barIndex).toString()"
-              :draggable="bar.disableDrag != null ? !bar.disableDrag : !disableDrag"
-              @dragstart="onDragStart($event, rowIndex, barIndex)"
+              :draggable="!resizing && (bar.disableDrag != null ? !bar.disableDrag : !disableDrag)"
+              @dragstart="!resizing && onDragStart($event, rowIndex, barIndex)"
               @click="!bar.disableOnClick && $emit('clickBar', bar)"
               @mouseenter="!bar.disableOnMouseEnter && $emit('mouseEnterBar', bar)"
               @mouseleave="!bar.disableOnMouseLeave && $emit('mouseLeaveBar', bar)"
             >
+              <div
+                class="bar-handle"
+                @mousedown="onMouseDown($event, rowIndex, barIndex, 'from')"
+              />
               <div class="bar-content">{{ bar.label }}</div>
+              <div
+                class="bar-handle"
+                @mousedown="onMouseDown($event, rowIndex, barIndex, 'to')"
+              />
             </div>
           </td>
         </tr>
@@ -194,6 +205,16 @@ export default {
     }
   },
 
+  data () {
+    return {
+      resizing: false,
+      resizingType: null,
+      resizingBar: null,
+      resizingValue: 0,
+      resizingRowIndex: 0
+    }
+  },
+
   computed: {
     fromDate () {
       return makeFromDate(this.from)
@@ -267,108 +288,100 @@ export default {
   },
 
   mounted () {
-    this.updateBarStyle()
+    this.updateBarStyleAll()
   },
 
   methods: {
-    wait (duration) {
-      return new Promise((resolve) => {
-        setTimeout(resolve, duration)
-      })
+    updateBarStyleAll () {
+      for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
+        this.updateBarStyleInRow(rowIndex)
+      }
     },
 
-    async updateBarStyle () {
+    updateBarStyleInRow (rowIndex) {
       // バーのポジショニングとリサイズ
-      for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
-        const bars = this.body[rowIndex].bars
-        for (let barIndex = 0; barIndex < bars.length; barIndex++) {
-          if (!this.barVisible(rowIndex, barIndex)) {
-            continue
-          }
-          const bar = bars[barIndex]
-          const barId = this.barId(rowIndex, barIndex)
-          const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
-          const barFromTime = bar.from.getTime()
-          const barToTime = bar.to.getTime()
-          const left = (barFromTime - this.fromTime) / this.timeOfTerm * 100
-          const width = (barToTime - barFromTime) / this.timeOfTerm * 100
-          barElement.style.position = 'relative'
-          barElement.style.left = `${left}%`
-          barElement.style.width = `${width}%`
+      const bars = this.body[rowIndex].bars
+      for (let barIndex = 0; barIndex < bars.length; barIndex++) {
+        if (!this.barVisible(rowIndex, barIndex)) {
+          continue
         }
+        const bar = bars[barIndex]
+        const barId = this.barId(rowIndex, barIndex)
+        const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
+        const barFromTime = bar.from.getTime()
+        const barToTime = bar.to.getTime()
+        const barLeft = (barFromTime - this.fromTime) / this.timeOfTerm * 100
+        const barWidth = (barToTime - barFromTime) / this.timeOfTerm * 100
+        barElement.style.position = 'relative'
+        barElement.style.left = `${barLeft}%`
+        barElement.style.width = `${barWidth}%`
       }
 
       // バーの並列化とテーブル高の設定
       if (!this.disableParallel) {
         // バーの並列化
-        for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
-          const bars = this.body[rowIndex].bars
-          const topGroups = { 0: [bars[0]] }
-          for (let barIndex = 1; barIndex < bars.length; barIndex++) {
-            if (!this.barVisible(rowIndex, barIndex)) {
+        const topGroups = {}
+        for (let barIndex = 0; barIndex < bars.length; barIndex++) {
+          if (!this.barVisible(rowIndex, barIndex)) {
+            continue
+          }
+          const bar = bars[barIndex]
+          const barFromTime = bar.from.getTime()
+          const barToTime = bar.to.getTime()
+          const barId = this.barId(rowIndex, barIndex)
+          const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
+
+          let barTop = 0
+          for (let targetIndex = 0; targetIndex < barIndex; targetIndex++) {
+            if (!this.barVisible(rowIndex, targetIndex)) {
               continue
             }
-            const bar = bars[barIndex]
-            const barFromTime = bar.from.getTime()
-            const barToTime = bar.to.getTime()
+            const targetBar = bars[targetIndex]
+            const targetBarFromTime = targetBar.from.getTime()
+            const targetBarToTime = targetBar.to.getTime()
+            if (targetBarFromTime <= barToTime && barFromTime <= targetBarToTime) {
+              const targetBarId = this.barId(rowIndex, targetIndex)
+              const targetBarElement = this.$el.querySelector(`[data-bar-id="${targetBarId}"]`)
+              const targetBottom = targetBarElement.offsetTop + targetBarElement.offsetHeight
+              barTop = Math.max(barTop, targetBottom)
+            }
+          }
 
-            let top = 0
-            for (let targetIndex = 0; targetIndex < barIndex; targetIndex++) {
-              if (!this.barVisible(rowIndex, targetIndex)) {
-                continue
-              }
-              const targetBar = bars[targetIndex]
+          const tops = Object.keys(topGroups)
+          for (const top of tops) {
+            let collided = false
+            for (const targetBar of topGroups[top]) {
               const targetBarFromTime = targetBar.from.getTime()
               const targetBarToTime = targetBar.to.getTime()
               if (targetBarFromTime <= barToTime && barFromTime <= targetBarToTime) {
-                const targetBarId = this.barId(rowIndex, targetIndex)
-                const targetBarElement = this.$el.querySelector(`[data-bar-id="${targetBarId}"]`)
-                const targetBottom = targetBarElement.offsetTop + targetBarElement.offsetHeight
-                top = Math.max(top, targetBottom)
-              }
-            }
-
-            const tops = Object.keys(topGroups)
-            for (let i = 0; i < tops.length; i++) {
-              let collided = false
-              for (const targetBar of topGroups[tops[i]]) {
-                const targetBarFromTime = targetBar.from.getTime()
-                const targetBarToTime = targetBar.to.getTime()
-                if (targetBarFromTime <= barToTime && barFromTime <= targetBarToTime) {
-                  collided = true
-                  break
-                }
-              }
-              if (collided === false) {
-                top = tops[i]
+                collided = true
                 break
               }
             }
-
-            const barId = this.barId(rowIndex, barIndex)
-            const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
-            barElement.style.position = 'absolute'
-            barElement.style.top = `${top}px`
-            topGroups[top] = topGroups[top] ?? []
-            topGroups[top].push(bar)
+            if (collided === false) {
+              barTop = top
+              break
+            }
           }
+
+          barElement.style.position = 'absolute'
+          barElement.style.top = `${barTop}px`
+          topGroups[barTop] = topGroups[barTop] ?? []
+          topGroups[barTop].push(bar)
         }
 
         // テーブル高の設定
-        for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
-          const bars = this.body[rowIndex].bars
-          let bottom = 0
-          for (let barIndex = 0; barIndex < bars.length; barIndex++) {
-            if (!this.barVisible(rowIndex, barIndex)) {
-              continue
-            }
-            const barId = this.barId(rowIndex, barIndex)
-            const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
-            const barBottom = barElement.offsetTop + barElement.offsetHeight
-            bottom = Math.max(bottom, barBottom)
+        let bottom = 0
+        for (let barIndex = 0; barIndex < bars.length; barIndex++) {
+          if (!this.barVisible(rowIndex, barIndex)) {
+            continue
           }
-          this.$refs[`td-${rowIndex}`][0].style.height = `${bottom}px`
+          const barId = this.barId(rowIndex, barIndex)
+          const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
+          const barBottom = barElement.offsetTop + barElement.offsetHeight
+          bottom = Math.max(bottom, barBottom)
         }
+        this.$refs[`td-${rowIndex}`][0].style.height = `${bottom}px`
       }
     },
 
@@ -409,8 +422,35 @@ export default {
           this.body[data.rowIndex].bars.splice(data.barIndex, 1)
         }
 
-        this.$nextTick(this.updateBarStyle)
+        this.$nextTick(this.updateBarStyleAll)
       }
+    },
+
+    onMouseDown (event, rowIndex, barIndex, type) {
+      this.resizing = true
+      this.resizingType = type
+      this.resizingBar = this.body[rowIndex].bars[barIndex]
+      this.resizingValue = 0
+      this.resizingRowIndex = rowIndex
+    },
+
+    onMouseMove (event) {
+      if (this.resizing) {
+        const x = event.offsetX
+        const width = this.$refs[`td-${this.resizingRowIndex}`][0].offsetWidth
+        const time = this.fromTime + ((x / width) * this.timeOfTerm)
+        const date = this.resizingBar[this.resizingType]
+        date.setTime(time)
+        this.updateBarStyleInRow(this.resizingRowIndex)
+      }
+    },
+
+    onMouseUp () {
+      this.resizing = false
+      this.resizingType = null
+      this.resizingBar = null
+      this.resizingValue = 0
+      this.resizingRowIndex = 0
     }
   }
 }
@@ -447,6 +487,7 @@ export default {
   /* バー */
   --ex-gantt-chart-bar-bg-color: #0080f0;
   --ex-gantt-chart-bar-fg-color: #f0f0f0;
+  --ex-gantt-chart-bar-handle-color: #0080f0;
 }
 </style>
 
@@ -485,6 +526,7 @@ thead td {
 
 .date {
   display: grid;
+  user-select: none;
 }
 
 .date-content {
@@ -493,7 +535,6 @@ thead td {
   padding: 0.5em 1em;
   text-align: center;
   text-overflow: ellipsis;
-  user-select: none;
   white-space: pre-line;
 }
 
@@ -528,18 +569,28 @@ tbody td {
   background-color: var(--ex-gantt-chart-bar-bg-color);
   border-radius: 0.25em;
   box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
   margin-top: 0.25em;
   overflow: hidden;
-  padding: 0.5em 0;
   position: relative;
 }
 .bar[data-visible="false"] {
   display: none;
 }
+[data-resizing="true"] .bar {
+  pointer-events: none;
+}
+
+.bar-handle {
+  background-color: var(--ex-gantt-chart-bar-handle-color);
+  cursor: col-resize;
+  min-width: 0.5em;
+}
 
 .bar-content {
   color: var(--ex-gantt-chart-bar-fg-color);
-  padding: 0 0.5em;
+  padding: 0.5em;
   user-select: none;
 
   /* 折り返さない */
