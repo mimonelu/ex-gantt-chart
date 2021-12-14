@@ -52,7 +52,7 @@
             :ref="`td-${rowIndex}`"
             @dragenter.prevent
             @dragover.prevent
-            @drop="!row.disableDrop && onDrop($event, rowIndex)"
+            @drop="canDrop(rowIndex) && onDrop($event, rowIndex)"
             @mousemove="onMouseMove"
           >
             <div
@@ -62,18 +62,20 @@
               :class="`bar${bar.classes ? ' ' + bar.classes : ''}`"
               :data-bar-id="barId(rowIndex, barIndex)"
               :data-visible="barVisible(rowIndex, barIndex).toString()"
-              :draggable="!resizing && (bar.disableDrag != null ? !bar.disableDrag : !disableDrag)"
+              :draggable="!resizing && canDrag(barIndex, rowIndex)"
               @dragstart="!resizing && onDragStart($event, rowIndex, barIndex)"
-              @click="!bar.disableOnClick && $emit('clickBar', bar)"
-              @mouseenter="!bar.disableOnMouseEnter && $emit('mouseEnterBar', bar)"
-              @mouseleave="!bar.disableOnMouseLeave && $emit('mouseLeaveBar', bar)"
+              @click="$emit('clickBar', bar)"
+              @mouseenter="$emit('mouseEnterBar', bar)"
+              @mouseleave="$emit('mouseLeaveBar', bar)"
             >
               <div
+                v-if="canResize(barIndex, rowIndex)"
                 class="bar-handle"
                 @mousedown="onMouseDown($event, rowIndex, barIndex, 'from')"
               />
               <div class="bar-content">{{ bar.label }}</div>
               <div
+                v-if="canResize(barIndex, rowIndex)"
                 class="bar-handle"
                 @mousedown="onMouseDown($event, rowIndex, barIndex, 'to')"
               />
@@ -88,12 +90,21 @@
 <script>
 const DD_MIME = 'application/ikzo-bar-index'
 
-const makeFromDate = (date) => {
+function makeFromDate (date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
-const makeToDate = (date) => {
+function makeToDate (date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59)
+}
+
+function choise () {
+  for (const argument of arguments) {
+    if (argument != null) {
+      return argument
+    }
+  }
+  return null
 }
 
 export default {
@@ -140,13 +151,11 @@ export default {
             classes: 'className',
             invisible: false,
             disableDrag: false,
-            disableMove: false,
-            disableOnClick: false,
-            disableOnMouseEnter: false,
-            disableOnMouseLeave: false
+            disableResize: false
           }, ...
         ],
-        disableDrop: false
+        disableDrop: false,
+        disableResize: false
       }, ...
     ]
     ```
@@ -184,12 +193,17 @@ export default {
       default: false
     },
 
-    disableMove: {
+    disableDrop: {
       type: Boolean,
       default: false
     },
 
     dropToFirst: {
+      type: Boolean,
+      default: false
+    },
+
+    disableResize: {
       type: Boolean,
       default: false
     },
@@ -210,7 +224,6 @@ export default {
       resizing: false,
       resizingType: null,
       resizingBar: null,
-      resizingValue: 0,
       resizingRowIndex: 0
     }
   },
@@ -320,6 +333,7 @@ export default {
       // バーの並列化とテーブル高の設定
       if (!this.disableParallel) {
         // バーの並列化
+        // WANT: 要リファクタリング
         const topGroups = {}
         for (let barIndex = 0; barIndex < bars.length; barIndex++) {
           if (!this.barVisible(rowIndex, barIndex)) {
@@ -385,6 +399,20 @@ export default {
       }
     },
 
+    // バーの移動
+
+    canDrag (barIndex, rowIndex) {
+      return !choise(
+        this.body[rowIndex]?.bars[barIndex]?.disableDrag,
+        this.body[rowIndex]?.disableDrag,
+        this.disableDrag
+      )
+    },
+
+    canDrop (rowIndex) {
+      return !choise(null, this.body[rowIndex]?.disableDrop, this.disableDrop)
+    },
+
     onDragStart (event, rowIndex, barIndex) {
       event.dataTransfer.dropEffect = 'move'
       event.dataTransfer.effectAllowed = 'move'
@@ -394,23 +422,22 @@ export default {
     onDrop (event, targetIndex) {
       if (event.dataTransfer.types.includes(DD_MIME)) {
         event.preventDefault()
+
+        // ドロップできる要素は td 要素のみ
+        if (event.target.tagName !== 'TD') {
+          return
+        }
+
         const json = event.dataTransfer.getData(DD_MIME)
         const data = JSON.parse(json)
         const bar = this.body[data.rowIndex].bars[data.barIndex]
 
-        // バーの移動が許可されている場合、ドロップできる要素は td 要素のみに制限
-        if ((bar.disableMove != null ? !bar.disableMove : !this.disableMove) && event.target.tagName !== 'TD') {
-          return
-        }
-
         // バーの移動
-        if (bar.disableMove != null ? !bar.disableMove : !this.disableMove) {
-          const positionRatio = (event.offsetX - data.offset) / event.target.offsetWidth
-          const fromTime = (this.timeOfTerm * positionRatio) + this.fromTime
-          const toTime = (bar.to.getTime() - bar.from.getTime()) + fromTime
-          bar.from.setTime(fromTime)
-          bar.to.setTime(toTime)
-        }
+        const positionRatio = (event.offsetX - data.offset) / event.target.offsetWidth
+        const fromTime = (this.timeOfTerm * positionRatio) + this.fromTime
+        const toTime = (bar.to.getTime() - bar.from.getTime()) + fromTime
+        bar.from.setTime(fromTime)
+        bar.to.setTime(toTime)
 
         // バーデータの移動
         if (targetIndex !== data.rowIndex) {
@@ -426,31 +453,51 @@ export default {
       }
     },
 
+    // バーのリサイズ
+
+    canResize (barIndex, rowIndex) {
+      return !choise(
+        this.body[rowIndex]?.bars[barIndex]?.disableResize,
+        this.body[rowIndex]?.disableResize,
+        this.disableResize
+      )
+    },
+
     onMouseDown (event, rowIndex, barIndex, type) {
-      this.resizing = true
-      this.resizingType = type
-      this.resizingBar = this.body[rowIndex].bars[barIndex]
-      this.resizingValue = 0
-      this.resizingRowIndex = rowIndex
+      if (this.canResize(barIndex, rowIndex)) {
+        this.resizing = true
+        this.resizingType = type
+        this.resizingBar = this.body[rowIndex].bars[barIndex]
+        this.resizingRowIndex = rowIndex
+      }
     },
 
     onMouseMove (event) {
       if (this.resizing) {
-        const x = event.offsetX
-        const width = this.$refs[`td-${this.resizingRowIndex}`][0].offsetWidth
-        const time = this.fromTime + ((x / width) * this.timeOfTerm)
-        const date = this.resizingBar[this.resizingType]
-        date.setTime(time)
-        this.updateBarStyleInRow(this.resizingRowIndex)
+        const mouseX = event.offsetX
+        const tdWidth = this.$refs[`td-${this.resizingRowIndex}`][0].offsetWidth
+        const barFromOrToTime = this.fromTime + ((mouseX / tdWidth) * this.timeOfTerm)
+        const barFromOrTo = this.resizingBar[this.resizingType]
+        const barTerm = this.resizingType === 'from'
+          ? this.resizingBar.to.getTime() - barFromOrToTime
+          : barFromOrToTime - this.resizingBar.from.getTime()
+        const minTime = this.timeOfTerm / 100
+
+        // バーの期間が全期間の 1 / 100 以上であればリサイズ
+        if (barTerm >= minTime) {
+          barFromOrTo.setTime(barFromOrToTime)
+          this.updateBarStyleInRow(this.resizingRowIndex)
+        }
       }
     },
 
     onMouseUp () {
-      this.resizing = false
-      this.resizingType = null
-      this.resizingBar = null
-      this.resizingValue = 0
-      this.resizingRowIndex = 0
+      if (this.resizing) {
+        this.resizing = false
+        this.resizingType = null
+        this.resizingBar = null
+        this.resizingRowIndex = 0
+      }
     }
   }
 }

@@ -71,17 +71,16 @@ export default {
             classes: 'hoge fuga',
             invisible: false,
             disableDrag: false,
-            disableMove: false,
-            disableOnClick: false,
-            disableOnMouseEnter: false,
-            disableOnMouseLeave: false
+            disableResize: false
           })
         }
 
         body.push({
           headers,
           bars,
-          disableDrop: false
+          disableDrag: false,
+          disableDrop: false,
+          disableResize: false
         })
       }
 
@@ -96,8 +95,9 @@ export default {
         body,
         disableParallel: false,
         disableDrag: false,
-        disableMove: false,
+        disableDrop: false,
         dropToFirst: false,
+        disableResize: false,
         mainSeparatorSpan: 24,
         subSeparatorSpan: 6,
         dateFormatter (date) {
