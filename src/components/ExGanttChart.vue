@@ -3,42 +3,61 @@
     class="ex-gantt-chart"
     :data-moving="moving"
     :data-resizing="resizing"
-    :style="{
-      '--ex-gantt-chart-v-main-separator-width': `calc(100% / ${hoursOfTerm / mainSeparatorSpan})`,
-      '--ex-gantt-chart-v-sub-separator-width': `calc(100% / ${hoursOfTerm / subSeparatorSpan})`,
-    }"
     @mouseup="onMouseUp"
   >
     <table>
+      <!-- ヘッド -->
       <thead>
         <tr>
+          <!-- ヘッドヘッダー -->
           <template v-if="!invisibleHeaders">
             <th
               v-for="header, headerIndex in headers"
               :key="`head-header-${headerIndex}`"
             >
-              <div class="head-header-content">{{ header.label }}</div>
+              <div class="head-header-label">{{ header.label }}</div>
             </th>
           </template>
+
+          <!-- ヘッドコンテンツ -->
           <td>
             <div
-              class="date"
+              class="heaad-content"
               :style="`grid-template-columns: repeat(${dateOfTerm}, 1fr);`"
             >
+              <!-- 日別ボックス -->
               <div
                 v-for="date, dateIndex of datesInTerm"
-                :key="`date-content-${dateIndex}`"
-                class="date-content"
-              >{{ dateFormatter(date) }}</div>
+                :key="`date-${dateIndex}`"
+                class="date"
+              >
+                <!-- 分割線ラベル -->
+                <div
+                  class="separator-label-container"
+                  :style="`grid-template-columns: repeat(${numberOfSubSeparators}, 1fr);`"
+                >
+                  <div
+                    v-for="subSeparatorIndex of numberOfSubSeparators"
+                    :key="subSeparatorIndex"
+                    class="separator-label"
+                  >{{ (subSeparatorIndex - 1) * subSeparatorSpan }}</div>
+                </div>
+
+                <!-- 日付 -->
+                <div class="date-label">{{ dateFormatter(date) }}</div>
+              </div>
             </div>
           </td>
         </tr>
       </thead>
+
+      <!-- ボディ -->
       <tbody>
         <tr
           v-for="row, rowIndex in body"
           :key="`body-row-${rowIndex}`"
         >
+          <!-- ボディヘッダー -->
           <template v-if="!invisibleHeaders">
             <th
               v-for="header, headerIndex in row.headers"
@@ -46,9 +65,11 @@
               :rowspan="rowSpan(rowIndex, headerIndex)"
               :style="{ display: header.rowSpan ? 'none': '' }"
             >
-              <div class="body-header-content">{{ header.label }}</div>
+              <div class="body-header-label">{{ header.label }}</div>
             </th>
           </template>
+
+          <!-- ボディコンテンツ -->
           <td
             :ref="`td-${rowIndex}`"
             @dragenter.prevent
@@ -56,6 +77,26 @@
             @drop="canDrop(rowIndex) && onDrop($event, rowIndex)"
             @mousemove="onMouseMove"
           >
+            <!-- 分割線 -->
+            <div
+              class="separator-container"
+              :style="`grid-template-columns: repeat(${dateOfTerm}, 1fr);`"
+            >
+              <div
+                v-for="dateIndex of dateOfTerm"
+                :key="dateIndex"
+                class="main-separator"
+                :style="`grid-template-columns: repeat(${numberOfSubSeparators}, 1fr);`"
+              >
+                <div
+                  v-for="subSeparatorIndex of numberOfSubSeparators"
+                  :key="subSeparatorIndex"
+                  class="sub-separator"
+                />
+              </div>
+            </div>
+
+            <!-- バー -->
             <div
               v-for="bar, barIndex in row.bars"
               :key="barId(rowIndex, barIndex)"
@@ -93,11 +134,11 @@
 const DD_MIME = 'application/ikzo-bar-index'
 
 function makeFromDate (date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0)
 }
 
 function makeToDate (date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59)
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
 }
 
 function choise () {
@@ -113,6 +154,24 @@ export default {
   name: 'ExGanttChart',
 
   props: {
+    from: {
+      type: Date,
+      default () {
+        const date = new Date()
+        date.setDate(date.getDate() - 3)
+        return makeFromDate(date)
+      }
+    },
+
+    to: {
+      type: Date,
+      default () {
+        const date = new Date()
+        date.setDate(date.getDate() + 3)
+        return makeToDate(date)
+      }
+    },
+
     /*
     ```
     [
@@ -156,6 +215,7 @@ export default {
             disableResize: false
           }, ...
         ],
+        disableDrag: false,
         disableDrop: false,
         disableResize: false
       }, ...
@@ -165,24 +225,6 @@ export default {
     body: {
       type: Array,
       required: true
-    },
-
-    from: {
-      type: Date,
-      default () {
-        const date = new Date()
-        date.setDate(date.getDate() - 3)
-        return makeFromDate(date)
-      }
-    },
-
-    to: {
-      type: Date,
-      default () {
-        const date = new Date()
-        date.setDate(date.getDate() + 3)
-        return makeToDate(date)
-      }
     },
 
     disableParallel: {
@@ -266,10 +308,6 @@ export default {
       return Math.round(this.timeOfTerm / 1000 / 60 / 60 / 24)
     },
 
-    hoursOfTerm () {
-      return this.timeOfTerm / 1000 / 60 / 60
-    },
-
     rowSpan () {
       return (rowIndex, headerIndex) => {
         if (this.body[rowIndex].headers[headerIndex].rowSpan) {
@@ -300,6 +338,10 @@ export default {
         const barToTime = bar.to.getTime()
         return barFromTime <= this.toTime && this.fromTime <= barToTime
       }
+    },
+
+    numberOfSubSeparators () {
+      return Math.floor(this.mainSeparatorSpan / this.subSeparatorSpan)
     }
   },
 
@@ -519,25 +561,26 @@ export default {
   --ex-gantt-chart-head-header-bg-color: #d0d0d0;
   --ex-gantt-chart-head-header-fg-color: #303030;
 
-  /* 日付 */
+  /* 日別ボックス */
   --ex-gantt-chart-date-bg-color: #d0d0d0;
   --ex-gantt-chart-date-fg-color: #303030;
   --ex-gantt-chart-date-separator-color: #c0c0c0;
+
+  /* 分割線ラベル */
+  --ex-gantt-chart-separator-label-color: #a0a0a0;
 
   /* ボディヘッダー */
   --ex-gantt-chart-body-header-bg-color: #e0e0e0;
   --ex-gantt-chart-body-header-fg-color: #202020;
 
-  /* ボディデータ */
+  /* ボディコンテンツ */
   --ex-gantt-chart-body-data-bg-color: #f0f0f0;
 
   /* 縦のメイン分割線 */
   --ex-gantt-chart-v-main-separator-color: #c0c0c0;
-  --ex-gantt-chart-v-main-separator-width: calc(100% / 24); /* スクリプト制御 */
 
   /* 縦のサブ分割線 */
   --ex-gantt-chart-v-sub-separator-color: #e0e0e0;
-  --ex-gantt-chart-v-sub-separator-width: calc(100% / 48); /* スクリプト制御 */
 
   /* バー */
   --ex-gantt-chart-bar-bg-color: #0080f0;
@@ -564,65 +607,116 @@ table {
   width: 100%;
 }
 
+/* ヘッドヘッダー */
+
 thead th {
   background-color: var(--ex-gantt-chart-head-header-bg-color);
   padding: 0.5em 1em;
 }
 
-.head-header-content {
+.head-header-label {
   color: var(--ex-gantt-chart-head-header-fg-color);
   white-space: pre;
 }
 
+/* ヘッドコンテンツ */
+
 thead td {
   background-color: var(--ex-gantt-chart-date-bg-color);
   padding: 0;
-
-  /* 縦の分割線 */
-  background-image:
-    repeating-linear-gradient(90deg, var(--ex-gantt-chart-date-separator-color), var(--ex-gantt-chart-date-separator-color) 1px, transparent 1px, transparent var(--ex-gantt-chart-v-main-separator-width));
-  background-position: -1px 0;
-  background-size: auto auto;
 }
 
-.date {
+.heaad-content {
   display: grid;
 }
 
-.date-content {
+/* 日別ボックス */
+
+.date {
+  overflow: hidden;
+  position: relative;
+}
+.date:not(:first-child) {
+  border-left: 1px solid var(--ex-gantt-chart-date-separator-color);
+}
+
+/* 分割線ラベル */
+
+.separator-label-container {
+  display: grid;
+  justify-content: space-between;
+  position: absolute;
+  left: 0;
+  bottom: 0.125em;
+  width: 100%;
+}
+
+.separator-label {
+  color: var(--ex-gantt-chart-separator-label-color);
+  font-size: x-small;
+  line-height: 1;
+  margin-left: 0.25em;
+  overflow: hidden;
+}
+
+/* 日付 */
+
+.date-label {
   color: var(--ex-gantt-chart-date-fg-color);
   overflow: hidden;
-  padding: 0.5em 1em;
+  padding: 0.5em 1em 1em;
   text-align: center;
   text-overflow: ellipsis;
   white-space: pre-line;
 }
+
+/* ボディヘッダー */
 
 tbody th {
   background-color: var(--ex-gantt-chart-body-header-bg-color);
   padding: 0.5em 1em;
 }
 
-.body-header-content {
+.body-header-label {
   color: var(--ex-gantt-chart-body-header-fg-color);
   white-space: pre;
 }
 
+/* ボディコンテンツ */
+
 tbody td {
   background-color: var(--ex-gantt-chart-body-data-bg-color);
-  overflow: hidden;
+  overflow-x: hidden;
   padding: 0 0 0.25em 0;
   position: relative;
   width: 100%;
   vertical-align: top;
-
-  /* 縦の分割線 */
-  background-image:
-    repeating-linear-gradient(90deg, var(--ex-gantt-chart-v-main-separator-color), var(--ex-gantt-chart-v-main-separator-color) 1px, transparent 1px, transparent var(--ex-gantt-chart-v-main-separator-width)),
-    repeating-linear-gradient(90deg, var(--ex-gantt-chart-v-sub-separator-color), var(--ex-gantt-chart-v-sub-separator-color) 1px, transparent 1px, transparent var(--ex-gantt-chart-v-sub-separator-width));
-  background-position: -1px 0;
-  background-size: auto auto;
 }
+
+/* 分割線 */
+
+.separator-container {
+  display: grid;
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.main-separator {
+  display: grid;
+}
+.main-separator:not(:first-child) {
+  border-left: 1px solid var(--ex-gantt-chart-v-main-separator-color);
+}
+
+.sub-separator:not(:first-child) {
+  border-left: 1px solid var(--ex-gantt-chart-v-sub-separator-color);
+}
+
+/* バー */
 
 .bar {
   background-color: var(--ex-gantt-chart-bar-bg-color);

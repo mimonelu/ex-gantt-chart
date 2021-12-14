@@ -46,7 +46,7 @@ export default {
       to.setHours(23)
       to.setMinutes(59)
       to.setSeconds(59)
-      to.setMilliseconds(0)
+      to.setMilliseconds(999)
 
       const body = []
       for (let i = 0; i < 3; i++) {
@@ -92,6 +92,10 @@ export default {
           { label: 'Head header 2' }
         ],
         invisibleHeaders: false,
+        dateFormatter (date) {
+          const days = ['日', '月', '火', '水', '木', '金', '土']
+          return `${date.getMonth() + 1}/${date.getDate()} (${days[date.getDay()]})`
+        },
         body,
         disableParallel: false,
         disableDrag: false,
@@ -99,11 +103,7 @@ export default {
         dropToFirst: false,
         disableResize: false,
         mainSeparatorSpan: 24,
-        subSeparatorSpan: 6,
-        dateFormatter (date) {
-          const days = ['日', '月', '火', '水', '木', '金', '土']
-          return `${date.getMonth() + 1}/${date.getDate()} (${days[date.getDay()]})`
-        }
+        subSeparatorSpan: 6
       }
       return result
     },
