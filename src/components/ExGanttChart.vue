@@ -549,6 +549,7 @@ export default {
 <style scoped>
 .ex-gantt-chart {
   overflow-y: scroll;
+  user-select: none;
 }
 .ex-gantt-chart[data-moving="true"] {
   cursor: move;
@@ -657,7 +658,6 @@ tbody td {
   color: var(--ex-gantt-chart-bar-fg-color);
   padding: 0.5em 1em;
   text-align: center;
-  user-select: none;
 
   /* 折り返さない */
   overflow: hidden;
