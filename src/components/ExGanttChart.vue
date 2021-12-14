@@ -542,7 +542,7 @@ export default {
   /* バー */
   --ex-gantt-chart-bar-bg-color: #0080f0;
   --ex-gantt-chart-bar-fg-color: #f0f0f0;
-  --ex-gantt-chart-bar-handle-color: #0080f0;
+  --ex-gantt-chart-bar-handle-color: #0060d0;
 }
 </style>
 
@@ -550,10 +550,10 @@ export default {
 .ex-gantt-chart {
   overflow-y: scroll;
 }
-.ex-gantt-chart[data-moving="true"] * {
+.ex-gantt-chart[data-moving="true"] {
   cursor: move;
 }
-.ex-gantt-chart[data-resizing="true"] * {
+.ex-gantt-chart[data-resizing="true"] {
   cursor: col-resize;
 }
 
@@ -570,7 +570,6 @@ thead th {
 
 .head-header-content {
   color: var(--ex-gantt-chart-head-header-fg-color);
-  user-select: none;
   white-space: pre;
 }
 
@@ -587,7 +586,6 @@ thead td {
 
 .date {
   display: grid;
-  user-select: none;
 }
 
 .date-content {
@@ -602,7 +600,6 @@ thead td {
 tbody th {
   background-color: var(--ex-gantt-chart-body-header-bg-color);
   padding: 0.5em 1em;
-  user-select: none;
 }
 
 .body-header-content {
@@ -630,8 +627,6 @@ tbody td {
   background-color: var(--ex-gantt-chart-bar-bg-color);
   border-radius: 0.25em;
   box-sizing: border-box;
-  display: flex;
-  justify-content: space-between;
   margin-top: 0.25em;
   overflow: hidden;
   position: relative;
@@ -646,12 +641,22 @@ tbody td {
 .bar-handle {
   background-color: var(--ex-gantt-chart-bar-handle-color);
   cursor: col-resize;
-  min-width: 0.5em;
+  position: absolute;
+  top: 0;
+  width: 0.5em;
+  height: 100%;
+}
+.bar-handle:first-child {
+  left: 0;
+}
+.bar-handle:last-child {
+  right: 0;
 }
 
 .bar-content {
   color: var(--ex-gantt-chart-bar-fg-color);
-  padding: 0.5em;
+  padding: 0.5em 1em;
+  text-align: center;
   user-select: none;
 
   /* 折り返さない */
