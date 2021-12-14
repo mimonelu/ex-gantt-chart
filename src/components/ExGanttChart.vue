@@ -1,6 +1,7 @@
 <template>
   <div
     class="ex-gantt-chart"
+    :data-moving="moving"
     :data-resizing="resizing"
     :style="{
       '--ex-gantt-chart-v-main-separator-width': `calc(100% / ${hoursOfTerm / mainSeparatorSpan})`,
@@ -64,6 +65,7 @@
               :data-visible="barVisible(rowIndex, barIndex).toString()"
               :draggable="!resizing && canDrag(barIndex, rowIndex)"
               @dragstart="!resizing && onDragStart($event, rowIndex, barIndex)"
+              @dragend="onDragEnd"
               @click="$emit('clickBar', bar)"
               @mouseenter="$emit('mouseEnterBar', bar)"
               @mouseleave="$emit('mouseLeaveBar', bar)"
@@ -221,6 +223,7 @@ export default {
 
   data () {
     return {
+      moving: false,
       resizing: false,
       resizingType: null,
       resizingBar: null,
@@ -414,9 +417,14 @@ export default {
     },
 
     onDragStart (event, rowIndex, barIndex) {
+      this.moving = true
       event.dataTransfer.dropEffect = 'move'
       event.dataTransfer.effectAllowed = 'move'
       event.dataTransfer.setData(DD_MIME, JSON.stringify({ rowIndex, barIndex, offset: event.offsetX }))
+    },
+
+    onDragEnd () {
+      this.moving = false
     },
 
     onDrop (event, targetIndex) {
@@ -541,6 +549,12 @@ export default {
 <style scoped>
 .ex-gantt-chart {
   overflow-y: scroll;
+}
+.ex-gantt-chart[data-moving="true"] * {
+  cursor: move;
+}
+.ex-gantt-chart[data-resizing="true"] * {
+  cursor: col-resize;
 }
 
 table {
