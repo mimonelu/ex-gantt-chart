@@ -1,7 +1,7 @@
 <template>
   <div
     class="ex-gantt-chart"
-    :data-moving="moving"
+    :data-dragging="dragging"
     :data-resizing="resizing"
     @mouseup="onMouseUp"
   >
@@ -265,7 +265,7 @@ export default {
 
   data () {
     return {
-      moving: false,
+      dragging: false,
       resizing: false,
       resizingType: null,
       resizingBar: null,
@@ -459,31 +459,34 @@ export default {
     },
 
     onDragStart (event, rowIndex, barIndex) {
-      this.moving = true
+      this.dragging = true
       event.dataTransfer.dropEffect = 'move'
       event.dataTransfer.effectAllowed = 'move'
       event.dataTransfer.setData(DD_MIME, JSON.stringify({ rowIndex, barIndex, offset: event.offsetX }))
     },
 
     onDragEnd () {
-      this.moving = false
+      this.dragging = false
     },
 
     onDrop (event, targetIndex) {
       if (event.dataTransfer.types.includes(DD_MIME)) {
         event.preventDefault()
-
-        // ドロップできる要素は td 要素のみ
-        if (event.target.tagName !== 'TD') {
-          return
-        }
-
         const json = event.dataTransfer.getData(DD_MIME)
         const data = JSON.parse(json)
         const bar = this.body[data.rowIndex].bars[data.barIndex]
 
+        // td 要素上のマウスポジションと td 要素の幅を取得
+        let offsetX = event.offsetX
+        let element = event.target
+        while (element != null && element.tagName !== 'TD') {
+          offsetX += element.offsetLeft
+          element = element.parentNode
+        }
+        const offsetWidth = element?.offsetWidth ?? 0
+
         // バーの移動
-        const positionRatio = (event.offsetX - data.offset) / event.target.offsetWidth
+        const positionRatio = (offsetX - data.offset) / offsetWidth
         const fromTime = (this.timeOfTerm * positionRatio) + this.fromTime
         const toTime = (bar.to.getTime() - bar.from.getTime()) + fromTime
         bar.from.setTime(fromTime)
@@ -555,6 +558,7 @@ export default {
 
 <style>
 .ex-gantt-chart {
+  /* 枠線 */
   --ex-gantt-chart-border-color: #c0c0c0;
 
   /* ヘッドヘッダー */
@@ -576,10 +580,8 @@ export default {
   /* ボディコンテンツ */
   --ex-gantt-chart-body-data-bg-color: #f0f0f0;
 
-  /* 縦のメイン分割線 */
+  /* 分割線 */
   --ex-gantt-chart-v-main-separator-color: #c0c0c0;
-
-  /* 縦のサブ分割線 */
   --ex-gantt-chart-v-sub-separator-color: #e0e0e0;
 
   /* バー */
@@ -594,7 +596,7 @@ export default {
   overflow-y: scroll;
   user-select: none;
 }
-.ex-gantt-chart[data-moving="true"] {
+.ex-gantt-chart[data-dragging="true"] {
   cursor: move;
 }
 .ex-gantt-chart[data-resizing="true"] {
@@ -611,7 +613,7 @@ table {
 
 thead th {
   background-color: var(--ex-gantt-chart-head-header-bg-color);
-  padding: 0.5em 1em;
+  padding: 1em;
 }
 
 .head-header-label {
@@ -664,7 +666,7 @@ thead td {
 .date-label {
   color: var(--ex-gantt-chart-date-fg-color);
   overflow: hidden;
-  padding: 0.5em 1em 1em;
+  padding: 1em;
   text-align: center;
   text-overflow: ellipsis;
   white-space: pre-line;
