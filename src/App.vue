@@ -2,7 +2,6 @@
   <div id="app">
     <h1>ExGanttChart</h1>
     <ExGanttChart
-      ref="ganttChart"
       v-bind="exGanttChartProps"
       @clickBar="onClickBar"
       @mouseEnterBar="onMouseEnterBar"
@@ -27,22 +26,21 @@ export default {
 
   data () {
     return {
-      exGanttChartProps: this.makeData(),
+      exGanttChartProps: this.makeData(7),
       currentBarInfo: ''
     }
   },
 
   methods: {
-    makeData () {
+    makeData (daysOfTerm) {
       const from = new Date()
-      from.setDate(from.getDate() - 3)
       from.setHours(0)
       from.setMinutes(0)
       from.setSeconds(0)
       from.setMilliseconds(0)
 
       const to = new Date()
-      to.setDate(to.getDate() + 3)
+      to.setDate(from.getDate() + (daysOfTerm - 1))
       to.setHours(23)
       to.setMinutes(59)
       to.setSeconds(59)
@@ -61,7 +59,7 @@ export default {
         const bars = []
         for (let j = 0; j < i * (i + 1) + 1; j++) {
           const barFrom = new Date(from)
-          barFrom.setHours(this.irandom(-6, 24 * 7 - 1))
+          barFrom.setHours(this.irandom(-6, 24 * daysOfTerm - 1))
           const barTo = new Date(barFrom)
           barTo.setHours(barTo.getHours() + this.irandom(6, 48))
           bars.push({

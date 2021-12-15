@@ -485,7 +485,7 @@ export default {
         }
         const offsetWidth = element?.offsetWidth ?? 0
 
-        // バーの移動
+        // バーの期間設定
         const positionRatio = (offsetX - data.offset) / offsetWidth
         const fromTime = (this.timeOfTerm * positionRatio) + this.fromTime
         const toTime = (bar.to.getTime() - bar.from.getTime()) + fromTime
@@ -593,7 +593,6 @@ export default {
 
 <style scoped>
 .ex-gantt-chart {
-  overflow-y: scroll;
   user-select: none;
 }
 .ex-gantt-chart[data-dragging="true"] {
