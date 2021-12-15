@@ -17,6 +17,10 @@
 <script>
 import ExGanttChart from './components/ExGanttChart.vue'
 
+const irandom = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 export default {
   name: 'App',
 
@@ -59,9 +63,9 @@ export default {
         const bars = []
         for (let j = 0; j < i * (i + 1) + 1; j++) {
           const barFrom = new Date(from)
-          barFrom.setHours(this.irandom(-6, 24 * daysOfTerm - 1))
+          barFrom.setHours(irandom(-6, 24 * daysOfTerm - 1))
           const barTo = new Date(barFrom)
-          barTo.setHours(barTo.getHours() + this.irandom(6, 48))
+          barTo.setHours(barTo.getHours() + irandom(6, 48))
           bars.push({
             from: barFrom,
             to: barTo,
@@ -106,16 +110,13 @@ export default {
       return result
     },
 
-    irandom (min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min
-    },
-
     onClickBar (bar) {
-      this.currentBarInfo = `
-        label: ${bar.label}
-        from: ${bar.from.toLocaleString()}
-        to: ${bar.to.toLocaleString()}
-      `.trim().replace(/^\s/m, '')
+      const info = []
+      for (const key in bar) {
+        const value = typeof bar[key] === 'object' ? new Date(bar[key]).toLocaleString() : bar[key]
+        info.push(`${key}: ${value}`)
+      }
+      this.currentBarInfo = info.join('\n')
     },
 
     onMouseEnterBar (bar) { /**/ },

@@ -559,35 +559,35 @@ export default {
 <style>
 .ex-gantt-chart {
   /* 枠線 */
-  --ex-gantt-chart-border-color: #c0c0c0;
+  --exgc-border-color: #c0c0c0;
 
   /* ヘッドヘッダー */
-  --ex-gantt-chart-head-header-bg-color: #d0d0d0;
-  --ex-gantt-chart-head-header-fg-color: #303030;
+  --exgc-head-header-bg-color: #d0d0d0;
+  --exgc-head-header-fg-color: #303030;
 
   /* 日別ボックス */
-  --ex-gantt-chart-date-bg-color: #d0d0d0;
-  --ex-gantt-chart-date-fg-color: #303030;
-  --ex-gantt-chart-date-separator-color: #c0c0c0;
+  --exgc-date-bg-color: #d0d0d0;
+  --exgc-date-fg-color: #303030;
+  --exgc-date-separator-color: #c0c0c0;
 
   /* 分割線ラベル */
-  --ex-gantt-chart-separator-label-color: #a0a0a0;
+  --exgc-separator-label-color: #a0a0a0;
 
   /* ボディヘッダー */
-  --ex-gantt-chart-body-header-bg-color: #e0e0e0;
-  --ex-gantt-chart-body-header-fg-color: #202020;
+  --exgc-body-header-bg-color: #e0e0e0;
+  --exgc-body-header-fg-color: #202020;
 
   /* ボディコンテンツ */
-  --ex-gantt-chart-body-data-bg-color: #f0f0f0;
+  --exgc-body-data-bg-color: #f0f0f0;
 
   /* 分割線 */
-  --ex-gantt-chart-v-main-separator-color: #c0c0c0;
-  --ex-gantt-chart-v-sub-separator-color: #e0e0e0;
+  --exgc-v-main-separator-color: #c0c0c0;
+  --exgc-v-sub-separator-color: #e0e0e0;
 
   /* バー */
-  --ex-gantt-chart-bar-bg-color: #0080f0;
-  --ex-gantt-chart-bar-fg-color: #f0f0f0;
-  --ex-gantt-chart-bar-handle-color: #0060d0;
+  --exgc-bar-bg-color: #0080f0;
+  --exgc-bar-fg-color: #f0f0f0;
+  --exgc-bar-handle-color: #0060d0;
 }
 </style>
 
@@ -603,7 +603,7 @@ export default {
 }
 
 table {
-  background-color: var(--ex-gantt-chart-border-color);
+  background-color: var(--exgc-border-color);
   border-spacing: 1px;
   width: 100%;
 }
@@ -611,19 +611,19 @@ table {
 /* ヘッドヘッダー */
 
 thead th {
-  background-color: var(--ex-gantt-chart-head-header-bg-color);
+  background-color: var(--exgc-head-header-bg-color);
   padding: 1em;
 }
 
 .head-header-label {
-  color: var(--ex-gantt-chart-head-header-fg-color);
+  color: var(--exgc-head-header-fg-color);
   white-space: pre;
 }
 
 /* ヘッドコンテンツ */
 
 thead td {
-  background-color: var(--ex-gantt-chart-date-bg-color);
+  background-color: var(--exgc-date-bg-color);
   padding: 0;
 }
 
@@ -638,7 +638,7 @@ thead td {
   position: relative;
 }
 .date:not(:first-child) {
-  border-left: 1px solid var(--ex-gantt-chart-date-separator-color);
+  border-left: 1px solid var(--exgc-date-separator-color);
 }
 
 /* 分割線ラベル */
@@ -653,7 +653,7 @@ thead td {
 }
 
 .separator-label {
-  color: var(--ex-gantt-chart-separator-label-color);
+  color: var(--exgc-separator-label-color);
   font-size: x-small;
   line-height: 1;
   margin-left: 0.25em;
@@ -663,7 +663,7 @@ thead td {
 /* 日付 */
 
 .date-label {
-  color: var(--ex-gantt-chart-date-fg-color);
+  color: var(--exgc-date-fg-color);
   overflow: hidden;
   padding: 1em;
   text-align: center;
@@ -674,19 +674,19 @@ thead td {
 /* ボディヘッダー */
 
 tbody th {
-  background-color: var(--ex-gantt-chart-body-header-bg-color);
+  background-color: var(--exgc-body-header-bg-color);
   padding: 0.5em 1em;
 }
 
 .body-header-label {
-  color: var(--ex-gantt-chart-body-header-fg-color);
+  color: var(--exgc-body-header-fg-color);
   white-space: pre;
 }
 
 /* ボディコンテンツ */
 
 tbody td {
-  background-color: var(--ex-gantt-chart-body-data-bg-color);
+  background-color: var(--exgc-body-data-bg-color);
   overflow-x: hidden;
   padding: 0 0 0.25em 0;
   position: relative;
@@ -710,17 +710,17 @@ tbody td {
   display: grid;
 }
 .main-separator:not(:first-child) {
-  border-left: 1px solid var(--ex-gantt-chart-v-main-separator-color);
+  border-left: 1px solid var(--exgc-v-main-separator-color);
 }
 
 .sub-separator:not(:first-child) {
-  border-left: 1px solid var(--ex-gantt-chart-v-sub-separator-color);
+  border-left: 1px solid var(--exgc-v-sub-separator-color);
 }
 
 /* バー */
 
 .bar {
-  background-color: var(--ex-gantt-chart-bar-bg-color);
+  background-color: var(--exgc-bar-bg-color);
   border-radius: 0.25em;
   box-sizing: border-box;
   margin-top: 0.25em;
@@ -735,7 +735,7 @@ tbody td {
 }
 
 .bar-handle {
-  background-color: var(--ex-gantt-chart-bar-handle-color);
+  background-color: var(--exgc-bar-handle-color);
   cursor: col-resize;
   position: absolute;
   top: 0;
@@ -750,7 +750,7 @@ tbody td {
 }
 
 .bar-content {
-  color: var(--ex-gantt-chart-bar-fg-color);
+  color: var(--exgc-bar-fg-color);
   padding: 0.5em 1em;
   text-align: center;
 
