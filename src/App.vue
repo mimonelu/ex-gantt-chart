@@ -53,8 +53,16 @@ export default {
       const body = []
       for (let i = 0; i < 3; i++) {
         const headers = [
-          { label: 'Body header 1' },
-          { label: 'Body header 2' }
+          {
+            label: 'Body header 1',
+            classes: { 'custom-body-header-class-1': true },
+            attrs: { 'data-custom-body-header-attr-1': true }
+          },
+          {
+            label: 'Body header 2',
+            classes: { 'custom-body-header-class-2': true },
+            attrs: { 'data-custom-body-header-attr-2': true }
+          }
         ]
         if (i >= 1) {
           headers[0] = { rowSpan: true }
@@ -70,7 +78,8 @@ export default {
             from: barFrom,
             to: barTo,
             label: `Bar ${i + 1}-${j + 1}`,
-            classes: 'hoge fuga',
+            classes: { 'custom-bar-class': true },
+            attrs: { 'data-custom-bar-attr': true },
             visible: true,
             allowDrag: true,
             allowResize: true
@@ -80,6 +89,8 @@ export default {
         body.push({
           headers,
           bars,
+          classes: { 'custom-body-content-class': true },
+          attrs: { 'data-custom-body-content-attr': true },
           allowDrag: true,
           allowDrop: true,
           allowResize: true
@@ -90,8 +101,16 @@ export default {
         from,
         to,
         headers: [
-          { label: 'Head header 1' },
-          { label: 'Head header 2' }
+          {
+            label: 'Head header 1',
+            classes: { 'custom-head-header-class-1': true },
+            attrs: { 'data-custom-head-header-attr-1': true }
+          },
+          {
+            label: 'Head header 2',
+            classes: { 'custom-head-header-class-2': true },
+            attrs: { 'data-custom-head-header-attr-2': true }
+          }
         ],
         visibleHeaders: true,
         dateFormatter (date) {

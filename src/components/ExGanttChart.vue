@@ -14,6 +14,8 @@
             <th
               v-for="header, headerIndex in headers"
               :key="`head-header-${headerIndex}`"
+              :class="header.classes"
+              v-bind="header.attrs"
             >
               <div class="head-header-label">{{ header.label }}</div>
             </th>
@@ -62,6 +64,8 @@
             <th
               v-for="header, headerIndex in row.headers"
               :key="`body-header-${rowIndex}-${headerIndex}`"
+              :class="header.classes"
+              v-bind="header.attrs"
               :rowspan="rowSpan(rowIndex, headerIndex)"
               :style="{ display: header.rowSpan ? 'none': '' }"
             >
@@ -72,6 +76,8 @@
           <!-- ボディコンテンツ -->
           <td
             :ref="`td-${rowIndex}`"
+            :class="row.classes"
+            v-bind="row.attrs"
             @dragenter.prevent
             @dragover.prevent
             @drop="canDrop(rowIndex) && onDrop($event, rowIndex)"
@@ -101,7 +107,9 @@
               v-for="bar, barIndex in row.bars"
               :key="barId(rowIndex, barIndex)"
               :ref="barId(rowIndex, barIndex)"
-              :class="`bar${bar.classes ? ' ' + bar.classes : ''}`"
+              class="bar"
+              :class="bar.classes"
+              v-bind="bar.attrs"
               :data-bar-id="barId(rowIndex, barIndex)"
               :data-visible="barVisible(rowIndex, barIndex).toString()"
               :draggable="!resizing && canDrag(barIndex, rowIndex)"
@@ -175,7 +183,11 @@ export default {
     /*
     ```
     [
-      { label: 'Header\nThis is header in table head.' }, ...
+      {
+        label: string,
+        classes: string | Array | Object,
+        attrs: Array | Object
+      }, ...
     ]
     ```
     */
@@ -201,20 +213,27 @@ export default {
     [
       {
         headers: [
-          { label: 'Header\nThis is header in table body.' },
+          {
+            label: string,
+            classes: string | Array | Object,
+            attrs: Array | Object
+          },
           { rowSpan: true }
         ],
         bars: [
           {
             from: Date,
             to: Date,
-            label: 'Bar\nThis is bar.',
-            classes: 'className',
+            label: string,
+            classes: string | Array | Object,
+            attrs: Array | Object,
             visible: true,
             allowDrag: true,
             allowResize: true
           }, ...
         ],
+        classes: string | Array | Object,
+        attrs: Array | Object,
         allowDrag: true,
         allowDrop: true,
         allowResize: true
