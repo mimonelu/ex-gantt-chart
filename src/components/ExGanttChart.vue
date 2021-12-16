@@ -180,17 +180,6 @@ export default {
       }
     },
 
-    /*
-    ```
-    [
-      {
-        label: string,
-        classes: string | Array | Object,
-        attrs: Array | Object
-      }, ...
-    ]
-    ```
-    */
     headers: {
       type: Array,
       required: true
@@ -208,39 +197,6 @@ export default {
       }
     },
 
-    /*
-    ```
-    [
-      {
-        headers: [
-          {
-            label: string,
-            classes: string | Array | Object,
-            attrs: Array | Object
-          },
-          { rowSpan: true }
-        ],
-        bars: [
-          {
-            from: Date,
-            to: Date,
-            label: string,
-            classes: string | Array | Object,
-            attrs: Array | Object,
-            visible: true,
-            allowDrag: true,
-            allowResize: true
-          }, ...
-        ],
-        classes: string | Array | Object,
-        attrs: Array | Object,
-        allowDrag: true,
-        allowDrop: true,
-        allowResize: true
-      }, ...
-    ]
-    ```
-    */
     body: {
       type: Array,
       required: true
@@ -269,11 +225,6 @@ export default {
     allowResize: {
       type: Boolean,
       default: true
-    },
-
-    mainSeparatorSpan: {
-      type: Number,
-      default: 24
     },
 
     subSeparatorSpan: {
@@ -354,7 +305,7 @@ export default {
     barVisible () {
       return (rowIndex, barIndex) => {
         const bar = this.body[rowIndex].bars[barIndex]
-        if (!bar.visible) {
+        if (bar.visible != null && !bar.visible) {
           return false
         }
         const barFromTime = bar.from.getTime()
@@ -364,7 +315,7 @@ export default {
     },
 
     numberOfSubSeparators () {
-      return Math.floor(this.mainSeparatorSpan / this.subSeparatorSpan)
+      return this.subSeparatorSpan > 0 ? Math.floor(24 / this.subSeparatorSpan) : 0
     }
   },
 

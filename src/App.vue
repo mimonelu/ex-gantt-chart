@@ -132,7 +132,6 @@ export default {
         allowDrop: true,
         dropToLast: true,
         allowResize: true,
-        mainSeparatorSpan: 24,
         subSeparatorSpan: 6
       }
       return result
