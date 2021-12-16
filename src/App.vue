@@ -132,7 +132,11 @@ export default {
     onClickBar (bar) {
       const info = []
       for (const key in bar) {
-        const value = typeof bar[key] === 'object' ? new Date(bar[key]).toLocaleString() : bar[key]
+        const value = Object.prototype.toString.call(bar[key]) === '[object Date]'
+          ? new Date(bar[key]).toLocaleString()
+          : Object.prototype.toString.call(bar[key]) === '[object Object]'
+            ? JSON.stringify(bar[key])
+            : bar[key]
         info.push(`${key}: ${value}`)
       }
       this.currentBarInfo = info.join('\n')
