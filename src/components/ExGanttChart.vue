@@ -1,8 +1,8 @@
 <template>
   <div
     class="ex-gantt-chart"
-    :data-dragging="dragging"
-    :data-resizing="resizing"
+    :data-dragging="dragging.toString()"
+    :data-resizing="resizing.toString()"
     @mouseup="onMouseUp"
   >
     <table>
@@ -10,7 +10,7 @@
       <thead>
         <tr>
           <!-- ヘッドヘッダー -->
-          <template v-if="!invisibleHeaders">
+          <template v-if="visibleHeaders">
             <th
               v-for="header, headerIndex in headers"
               :key="`head-header-${headerIndex}`"
@@ -22,7 +22,7 @@
           <!-- ヘッドコンテンツ -->
           <td>
             <div
-              class="heaad-content"
+              class="head-content"
               :style="`grid-template-columns: repeat(${dateOfTerm}, 1fr);`"
             >
               <!-- 日別ボックス -->
@@ -58,7 +58,7 @@
           :key="`body-row-${rowIndex}`"
         >
           <!-- ボディヘッダー -->
-          <template v-if="!invisibleHeaders">
+          <template v-if="visibleHeaders">
             <th
               v-for="header, headerIndex in row.headers"
               :key="`body-header-${rowIndex}-${headerIndex}`"
@@ -141,7 +141,7 @@ function makeToDate (date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
 }
 
-function choise () {
+function getFirstExistingValue () {
   for (const argument of arguments) {
     if (argument != null) {
       return argument
@@ -184,9 +184,9 @@ export default {
       required: true
     },
 
-    invisibleHeaders: {
+    visibleHeaders: {
       type: Boolean,
-      default: false
+      default: true
     },
 
     dateFormatter: {
@@ -210,14 +210,14 @@ export default {
             to: Date,
             label: 'Bar\nThis is bar.',
             classes: 'className',
-            invisible: false,
-            disableDrag: false,
-            disableResize: false
+            visible: true,
+            allowDrag: true,
+            allowResize: true
           }, ...
         ],
-        disableDrag: false,
-        disableDrop: false,
-        disableResize: false
+        allowDrag: true,
+        allowDrop: true,
+        allowResize: true
       }, ...
     ]
     ```
@@ -227,29 +227,29 @@ export default {
       required: true
     },
 
-    disableParallel: {
+    allowParallel: {
       type: Boolean,
-      default: false
+      default: true
     },
 
-    disableDrag: {
+    allowDrag: {
       type: Boolean,
-      default: false
+      default: true
     },
 
-    disableDrop: {
+    allowDrop: {
       type: Boolean,
-      default: false
+      default: true
     },
 
-    dropToFirst: {
+    dropToLast: {
       type: Boolean,
-      default: false
+      default: true
     },
 
-    disableResize: {
+    allowResize: {
       type: Boolean,
-      default: false
+      default: true
     },
 
     mainSeparatorSpan: {
@@ -259,7 +259,7 @@ export default {
 
     subSeparatorSpan: {
       type: Number,
-      default: 1
+      default: 6
     }
   },
 
@@ -331,7 +331,7 @@ export default {
     barVisible () {
       return (rowIndex, barIndex) => {
         const bar = this.body[rowIndex].bars[barIndex]
-        if (bar.invisible) {
+        if (!bar.visible) {
           return false
         }
         const barFromTime = bar.from.getTime()
@@ -376,7 +376,7 @@ export default {
       }
 
       // バーの並列化とテーブル高の設定
-      if (!this.disableParallel) {
+      if (this.allowParallel) {
         // バーの並列化
         // WANT: 要リファクタリング
         const topGroups = {}
@@ -447,15 +447,15 @@ export default {
     // バーの移動
 
     canDrag (barIndex, rowIndex) {
-      return !choise(
-        this.body[rowIndex]?.bars[barIndex]?.disableDrag,
-        this.body[rowIndex]?.disableDrag,
-        this.disableDrag
+      return getFirstExistingValue(
+        this.body[rowIndex]?.bars[barIndex]?.allowDrag,
+        this.body[rowIndex]?.allowDrag,
+        this.allowDrag
       )
     },
 
     canDrop (rowIndex) {
-      return !choise(null, this.body[rowIndex]?.disableDrop, this.disableDrop)
+      return getFirstExistingValue(this.body[rowIndex]?.allowDrop, this.allowDrop)
     },
 
     onDragStart (event, rowIndex, barIndex) {
@@ -494,10 +494,10 @@ export default {
 
         // バーデータの移動
         if (targetIndex !== data.rowIndex) {
-          if (this.dropToFirst) {
-            this.body[targetIndex].bars.unshift(bar)
-          } else {
+          if (this.dropToLast) {
             this.body[targetIndex].bars.push(bar)
+          } else {
+            this.body[targetIndex].bars.unshift(bar)
           }
           this.body[data.rowIndex].bars.splice(data.barIndex, 1)
         }
@@ -509,10 +509,10 @@ export default {
     // バーのリサイズ
 
     canResize (barIndex, rowIndex) {
-      return !choise(
-        this.body[rowIndex]?.bars[barIndex]?.disableResize,
-        this.body[rowIndex]?.disableResize,
-        this.disableResize
+      return getFirstExistingValue(
+        this.body[rowIndex]?.bars[barIndex]?.allowResize,
+        this.body[rowIndex]?.allowResize,
+        this.allowResize
       )
     },
 
@@ -564,6 +564,8 @@ export default {
   /* ヘッドヘッダー */
   --exgc-head-header-bg-color: #d0d0d0;
   --exgc-head-header-fg-color: #303030;
+  --exgc-head-h-padding: 1em;
+  --exgc-head-v-padding: 1em;
 
   /* 日別ボックス */
   --exgc-date-bg-color: #d0d0d0;
@@ -578,16 +580,17 @@ export default {
   --exgc-body-header-fg-color: #202020;
 
   /* ボディコンテンツ */
-  --exgc-body-data-bg-color: #f0f0f0;
+  --exgc-body-content-bg-color: #f0f0f0;
 
   /* 分割線 */
-  --exgc-v-main-separator-color: #c0c0c0;
-  --exgc-v-sub-separator-color: #e0e0e0;
+  --exgc-main-separator-color: #c0c0c0;
+  --exgc-sub-separator-color: #e0e0e0;
 
   /* バー */
   --exgc-bar-bg-color: #0080f0;
   --exgc-bar-fg-color: #f0f0f0;
   --exgc-bar-handle-color: #0060d0;
+  --exgc-bar-margin: 0.25em;
 }
 </style>
 
@@ -606,13 +609,16 @@ table {
   background-color: var(--exgc-border-color);
   border-spacing: 1px;
   width: 100%;
+
+  /* td 要素内で `height: 100%;` を適用するため */
+  height: 1px;
 }
 
 /* ヘッドヘッダー */
 
 thead th {
   background-color: var(--exgc-head-header-bg-color);
-  padding: 1em;
+  padding: var(--exgc-head-h-padding) var(--exgc-head-v-padding);
 }
 
 .head-header-label {
@@ -625,10 +631,14 @@ thead th {
 thead td {
   background-color: var(--exgc-date-bg-color);
   padding: 0;
+
+  /* td 要素内で `height: 100%;` を適用するため */
+  height: 100%;
 }
 
-.heaad-content {
+.head-content {
   display: grid;
+  height: 100%;
 }
 
 /* 日別ボックス */
@@ -664,9 +674,12 @@ thead td {
 
 .date-label {
   color: var(--exgc-date-fg-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - (var(--exgc-head-v-padding) * 2));
   overflow: hidden;
-  padding: 1em;
-  text-align: center;
+  padding: var(--exgc-head-h-padding) var(--exgc-head-v-padding);
   text-overflow: ellipsis;
   white-space: pre-line;
 }
@@ -686,9 +699,9 @@ tbody th {
 /* ボディコンテンツ */
 
 tbody td {
-  background-color: var(--exgc-body-data-bg-color);
+  background-color: var(--exgc-body-content-bg-color);
   overflow-x: hidden;
-  padding: 0 0 0.25em 0;
+  padding: 0 0 var(--exgc-bar-margin) 0;
   position: relative;
   width: 100%;
   vertical-align: top;
@@ -710,20 +723,18 @@ tbody td {
   display: grid;
 }
 .main-separator:not(:first-child) {
-  border-left: 1px solid var(--exgc-v-main-separator-color);
+  border-left: 1px solid var(--exgc-main-separator-color);
 }
 
 .sub-separator:not(:first-child) {
-  border-left: 1px solid var(--exgc-v-sub-separator-color);
+  border-left: 1px solid var(--exgc-sub-separator-color);
 }
 
 /* バー */
 
 .bar {
   background-color: var(--exgc-bar-bg-color);
-  border-radius: 0.25em;
-  box-sizing: border-box;
-  margin-top: 0.25em;
+  margin-top: var(--exgc-bar-margin);
   overflow: hidden;
   position: relative;
 }

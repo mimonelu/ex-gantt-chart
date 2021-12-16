@@ -71,18 +71,18 @@ export default {
             to: barTo,
             label: `Bar ${i + 1}-${j + 1}`,
             classes: 'hoge fuga',
-            invisible: false,
-            disableDrag: false,
-            disableResize: false
+            visible: true,
+            allowDrag: true,
+            allowResize: true
           })
         }
 
         body.push({
           headers,
           bars,
-          disableDrag: false,
-          disableDrop: false,
-          disableResize: false
+          allowDrag: true,
+          allowDrop: true,
+          allowResize: true
         })
       }
 
@@ -93,17 +93,17 @@ export default {
           { label: 'Head header 1' },
           { label: 'Head header 2' }
         ],
-        invisibleHeaders: false,
+        visibleHeaders: true,
         dateFormatter (date) {
           const days = ['日', '月', '火', '水', '木', '金', '土']
           return `${date.getMonth() + 1}/${date.getDate()} (${days[date.getDay()]})`
         },
         body,
-        disableParallel: false,
-        disableDrag: false,
-        disableDrop: false,
-        dropToFirst: false,
-        disableResize: false,
+        allowParallel: true,
+        allowDrag: true,
+        allowDrop: true,
+        dropToLast: true,
+        allowResize: true,
         mainSeparatorSpan: 24,
         subSeparatorSpan: 6
       }
