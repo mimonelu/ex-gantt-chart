@@ -2,6 +2,7 @@
   <div id="app">
     <h1>ExGanttChart</h1>
     <ExGanttChart
+      ref="exGanttChart"
       v-bind="exGanttChartProps"
       @clickBar="onClickBar"
       @mouseEnterBar="onMouseEnterBar"
@@ -21,6 +22,20 @@ const irandom = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+const adjustFromDate = (from) => {
+  from.setHours(0)
+  from.setMinutes(0)
+  from.setSeconds(0)
+  from.setMilliseconds(0)
+}
+
+const adjustToDate = (to) => {
+  to.setHours(23)
+  to.setMinutes(59)
+  to.setSeconds(59)
+  to.setMilliseconds(999)
+}
+
 export default {
   name: 'App',
 
@@ -38,17 +53,11 @@ export default {
   methods: {
     makeData (daysOfTerm) {
       const from = new Date()
-      from.setHours(0)
-      from.setMinutes(0)
-      from.setSeconds(0)
-      from.setMilliseconds(0)
+      adjustFromDate(from)
 
       const to = new Date()
       to.setDate(from.getDate() + (daysOfTerm - 1))
-      to.setHours(23)
-      to.setMinutes(59)
-      to.setSeconds(59)
-      to.setMilliseconds(999)
+      adjustToDate(to)
 
       const body = []
       for (let i = 0; i < 3; i++) {
@@ -129,7 +138,8 @@ export default {
       return result
     },
 
-    onClickBar (bar) {
+    onClickBar ({ event, bar, rowIndex, barIndex, component }) {
+      // クリックされたバーのプロパティと値を表示
       const info = []
       for (const key in bar) {
         const value = Object.prototype.toString.call(bar[key]) === '[object Date]'
@@ -140,11 +150,16 @@ export default {
         info.push(`${key}: ${value}`)
       }
       this.currentBarInfo = info.join('\n')
+
+      // クリックされたバーを伸ばす
+      adjustFromDate(bar.from)
+      adjustToDate(bar.to)
+      component.updateBarsInRow(rowIndex) // or `component.updateBarsAll()`
     },
 
-    onMouseEnterBar (bar) { /**/ },
+    onMouseEnterBar ({ event, bar, rowIndex, barIndex, component }) { /**/ },
 
-    onMouseLeaveBar (bar) { /**/ }
+    onMouseLeaveBar ({ event, bar, rowIndex, barIndex, component }) { /**/ }
   }
 }
 </script>

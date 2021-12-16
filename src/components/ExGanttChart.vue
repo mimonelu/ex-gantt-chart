@@ -115,9 +115,9 @@
               :draggable="!resizing && canDrag(barIndex, rowIndex)"
               @dragstart="!resizing && onDragStart($event, rowIndex, barIndex)"
               @dragend="onDragEnd"
-              @click="$emit('clickBar', bar)"
-              @mouseenter="$emit('mouseEnterBar', bar)"
-              @mouseleave="$emit('mouseLeaveBar', bar)"
+              @click="$emit('clickBar', { event: $event, bar, rowIndex, barIndex, component: self })"
+              @mouseenter="$emit('mouseEnterBar', { event: $event, bar, rowIndex, barIndex, component: self })"
+              @mouseleave="$emit('mouseLeaveBar', { event: $event, bar, rowIndex, barIndex, component: self })"
             >
               <div
                 v-if="canResize(barIndex, rowIndex)"
@@ -293,6 +293,10 @@ export default {
   },
 
   computed: {
+    self () {
+      return this
+    },
+
     fromDate () {
       return makeFromDate(this.from)
     },
@@ -365,17 +369,17 @@ export default {
   },
 
   mounted () {
-    this.updateBarStyleAll()
+    this.updateBarsAll()
   },
 
   methods: {
-    updateBarStyleAll () {
+    updateBarsAll () {
       for (let rowIndex = 0; rowIndex < this.body.length; rowIndex++) {
-        this.updateBarStyleInRow(rowIndex)
+        this.updateBarsInRow(rowIndex)
       }
     },
 
-    updateBarStyleInRow (rowIndex) {
+    updateBarsInRow (rowIndex) {
       // バーのポジショニングとリサイズ
       const bars = this.body[rowIndex].bars
       for (let barIndex = 0; barIndex < bars.length; barIndex++) {
@@ -521,7 +525,7 @@ export default {
           this.body[data.rowIndex].bars.splice(data.barIndex, 1)
         }
 
-        this.$nextTick(this.updateBarStyleAll)
+        this.$nextTick(this.updateBarsAll)
       }
     },
 
@@ -558,7 +562,7 @@ export default {
         // バーの期間が全期間の 1 / 100 以上であればリサイズ
         if (barTerm >= minTime) {
           barFromOrTo.setTime(barFromOrToTime)
-          this.updateBarStyleInRow(this.resizingRowIndex)
+          this.updateBarsInRow(this.resizingRowIndex)
         }
       }
     },
@@ -782,6 +786,7 @@ tbody td {
 .bar-content {
   color: var(--exgc-bar-fg-color);
   padding: 0.5em 1em;
+  pointer-events: none;
   text-align: center;
 
   /* 折り返さない */
