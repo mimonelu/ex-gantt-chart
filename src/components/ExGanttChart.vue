@@ -674,7 +674,7 @@ tbody th {
 
 tbody td {
   background-color: var(--exgc-body-content-bg-color);
-  overflow-x: hidden;
+  overflow: hidden;
   padding: 0 0 var(--exgc-bar-margin) 0;
   position: relative;
   width: 100%;
