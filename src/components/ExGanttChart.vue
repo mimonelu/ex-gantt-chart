@@ -32,6 +32,7 @@
                 v-for="date, dateIndex of datesInTerm"
                 :key="`date-${dateIndex}`"
                 class="date"
+                :data-today="isToday(date)"
                 :data-day-of-week="date.getDay()"
               >
                 <!-- 分割線ラベル -->
@@ -93,6 +94,7 @@
                 v-for="date, dateIndex of datesInTerm"
                 :key="dateIndex"
                 class="main-separator"
+                :data-today="isToday(date)"
                 :data-day-of-week="date.getDay()"
                 :style="`grid-template-columns: repeat(${numberOfSubSeparators}, 1fr);`"
               >
@@ -282,6 +284,12 @@ export default {
 
     dateOfTerm () {
       return Math.round(this.timeOfTerm / 1000 / 60 / 60 / 24)
+    },
+
+    isToday () {
+      return (date) => {
+        return (new Date()).toDateString() === date.toDateString()
+      }
     },
 
     rowSpan () {
@@ -568,6 +576,9 @@ export default {
   --exgc-bar-handle-color: #0060d0;
   --exgc-bar-margin: 0.25em;
 
+  /* 本日 */
+  --exgc-today-color: #00c000;
+
   /* 曜日 */
   --exgc-sunday-rgb: 224, 96, 0;
   --exgc-saturday-rgb: 0, 96, 224;
@@ -626,6 +637,16 @@ thead td {
 .date {
   overflow: hidden;
   position: relative;
+}
+.date[data-today="true"]::before {
+  background-color: var(--exgc-today-color);
+  content: "";
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 0.25em;
 }
 .date[data-day-of-week="0"] {
   background-color: rgba(var(--exgc-sunday-rgb), 0.125);
