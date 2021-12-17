@@ -17,7 +17,10 @@
               :class="header.classes"
               v-bind="header.attrs"
             >
-              <div class="head-header-label">{{ header.label }}</div>
+              <div
+                class="head-header-label"
+                v-html="header.label"
+              />
             </th>
           </template>
 
@@ -48,7 +51,10 @@
                 </div>
 
                 <!-- 日付 -->
-                <div class="date-label">{{ dateFormatter(date) }}</div>
+                <div
+                  class="date-label"
+                  v-html="dateFormatter(date)"
+                />
               </div>
             </div>
           </td>
@@ -71,7 +77,10 @@
               :rowspan="rowSpan(rowIndex, headerIndex)"
               :style="{ display: header.rowSpan ? 'none': '' }"
             >
-              <div class="body-header-label">{{ header.label }}</div>
+              <div
+                class="body-header-label"
+                v-html="header.label"
+              />
             </th>
           </template>
 
@@ -128,7 +137,10 @@
                 class="bar-handle"
                 @mousedown="onMouseDown($event, rowIndex, barIndex, 'from')"
               />
-              <div class="bar-content">{{ bar.label }}</div>
+              <div
+                class="bar-content"
+                v-html="bar.label"
+              />
               <div
                 v-if="canResize(barIndex, rowIndex)"
                 class="bar-handle"
