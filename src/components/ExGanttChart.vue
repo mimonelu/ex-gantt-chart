@@ -32,6 +32,7 @@
                 v-for="date, dateIndex of datesInTerm"
                 :key="`date-${dateIndex}`"
                 class="date"
+                :data-day-of-week="date.getDay()"
               >
                 <!-- 分割線ラベル -->
                 <div
@@ -89,9 +90,10 @@
               :style="`grid-template-columns: repeat(${dateOfTerm}, 1fr);`"
             >
               <div
-                v-for="dateIndex of dateOfTerm"
+                v-for="date, dateIndex of datesInTerm"
                 :key="dateIndex"
                 class="main-separator"
+                :data-day-of-week="date.getDay()"
                 :style="`grid-template-columns: repeat(${numberOfSubSeparators}, 1fr);`"
               >
                 <div
@@ -565,6 +567,10 @@ export default {
   --exgc-bar-fg-color: #f0f0f0;
   --exgc-bar-handle-color: #0060d0;
   --exgc-bar-margin: 0.25em;
+
+  /* 曜日 */
+  --exgc-sunday-rgb: 224, 96, 0;
+  --exgc-saturday-rgb: 0, 96, 224;
 }
 </style>
 
@@ -621,6 +627,12 @@ thead td {
   overflow: hidden;
   position: relative;
 }
+.date[data-day-of-week="0"] {
+  background-color: rgba(var(--exgc-sunday-rgb), 0.125);
+}
+.date[data-day-of-week="6"] {
+  background-color: rgba(var(--exgc-saturday-rgb), 0.125);
+}
 .date:not(:first-child) {
   border-left: 1px solid var(--exgc-date-separator-color);
 }
@@ -656,6 +668,12 @@ thead td {
   padding: var(--exgc-head-h-padding) var(--exgc-head-v-padding);
   text-overflow: ellipsis;
   white-space: pre-line;
+}
+.date[data-day-of-week="0"] .date-label {
+  color: rgb(var(--exgc-sunday-rgb));
+}
+.date[data-day-of-week="6"] .date-label {
+  color: rgb(var(--exgc-saturday-rgb));
 }
 
 /* ボディヘッダー */
@@ -695,6 +713,12 @@ tbody td {
 
 .main-separator {
   display: grid;
+}
+.main-separator[data-day-of-week="0"] {
+  background-color: rgba(var(--exgc-sunday-rgb), 0.125);
+}
+.main-separator[data-day-of-week="6"] {
+  background-color: rgba(var(--exgc-saturday-rgb), 0.125);
 }
 .main-separator:not(:first-child) {
   border-left: 1px solid var(--exgc-main-separator-color);
