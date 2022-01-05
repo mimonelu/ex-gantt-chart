@@ -165,10 +165,10 @@ function makeToDate (date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
 }
 
-function getFirstExistingValue () {
-  for (const argument of arguments) {
-    if (argument != null) {
-      return argument
+function getFirstExistingValue (...params) {
+  for (const param of params) {
+    if (param != null) {
+      return param
     }
   }
   return null
@@ -362,6 +362,9 @@ export default {
         const bar = bars[barIndex]
         const barId = this.barId(rowIndex, barIndex)
         const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
+        if (!barElement) {
+          continue
+        }
         const barFromTime = bar.from.getTime()
         const barToTime = bar.to.getTime()
         const barLeft = (barFromTime - this.fromTime) / this.timeOfTerm * 100
@@ -385,6 +388,9 @@ export default {
           const barToTime = bar.to.getTime()
           const barId = this.barId(rowIndex, barIndex)
           const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
+          if (!barElement) {
+            continue
+          }
 
           let barTop = 0
           for (let targetIndex = 0; targetIndex < barIndex; targetIndex++) {
@@ -433,10 +439,16 @@ export default {
           }
           const barId = this.barId(rowIndex, barIndex)
           const barElement = this.$el.querySelector(`[data-bar-id="${barId}"]`)
+          if (!barElement) {
+            continue
+          }
           const barBottom = barElement.offsetTop + barElement.offsetHeight
           bottom = Math.max(bottom, barBottom)
         }
-        this.$refs[`td-${rowIndex}`][0].style.height = `${bottom}px`
+        const tds = this.$refs[`td-${rowIndex}`]
+        if (tds) {
+          tds[0].style.height = `${bottom}px`
+        }
       }
     },
 
@@ -608,9 +620,15 @@ export default {
   cursor: col-resize;
 }
 
+/* デフォルトの値だが通例的に別の値が設定されるため */
+.ex-gantt-chart *,
+.ex-gantt-chart * > * {
+  box-sizing: content-box;
+}
+
 table {
   background-color: var(--exgc-border-color);
-  border-spacing: 1px;
+  border-spacing: 0;
   width: 100%;
 
   /* td 要素内で `height: 100%;` を適用するため */
@@ -621,7 +639,11 @@ table {
 
 thead th {
   background-color: var(--exgc-head-header-bg-color);
+  border: 1px solid var(--exgc-border-color);
   padding: var(--exgc-head-h-padding) var(--exgc-head-v-padding);
+}
+thead th:not(:first-child) {
+  border-left-style: none;
 }
 
 .head-header-label {
@@ -633,6 +655,8 @@ thead th {
 
 thead td {
   background-color: var(--exgc-date-bg-color);
+  border: 1px solid var(--exgc-border-color);
+  border-left-style: none;
   padding: 0;
 
   /* td 要素内で `height: 100%;` を適用するため */
@@ -709,11 +733,25 @@ thead td {
   color: rgb(var(--exgc-saturday-rgb));
 }
 
+/* ヘッドの固定 */
+
+thead th,
+thead td {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 /* ボディヘッダー */
 
 tbody th {
   background-color: var(--exgc-body-header-bg-color);
+  border-right: 1px solid var(--exgc-border-color);
+  border-bottom: 1px solid var(--exgc-border-color);
   padding: 0.5em 1em;
+}
+tbody th:first-child {
+  border-left: 1px solid var(--exgc-border-color);
 }
 
 .body-header-label {
@@ -725,6 +763,8 @@ tbody th {
 
 tbody td {
   background-color: var(--exgc-body-content-bg-color);
+  border-right: 1px solid var(--exgc-border-color);
+  border-bottom: 1px solid var(--exgc-border-color);
   overflow: hidden;
   padding: 0 0 var(--exgc-bar-margin) 0;
   position: relative;
