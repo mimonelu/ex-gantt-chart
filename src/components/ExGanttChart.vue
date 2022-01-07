@@ -565,7 +565,7 @@ export default {
 </script>
 
 <style>
-.ex-gantt-chart {
+:root {
   /* 枠線 */
   --exgc-border-color: #c0c0c0;
 
@@ -649,6 +649,7 @@ thead th:not(:first-child) {
 .head-header-label {
   color: var(--exgc-head-header-fg-color);
   white-space: pre;
+  word-break: break-all;
 }
 
 /* ヘッドコンテンツ */
@@ -725,6 +726,7 @@ thead td {
   padding: var(--exgc-head-h-padding) var(--exgc-head-v-padding);
   text-overflow: ellipsis;
   white-space: pre-line;
+  word-break: break-all;
 }
 .date[data-day-of-week="0"] .date-label {
   color: rgb(var(--exgc-sunday-rgb));
@@ -757,6 +759,7 @@ tbody th:first-child {
 .body-header-label {
   color: var(--exgc-body-header-fg-color);
   white-space: pre;
+  word-break: break-all;
 }
 
 /* ボディコンテンツ */
