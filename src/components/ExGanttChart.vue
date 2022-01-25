@@ -129,6 +129,7 @@
               @dragstart="!resizing && onDragStart($event, rowIndex, barIndex)"
               @dragend="onDragEnd"
               @click="$emit('clickBar', { event: $event, bar, rowIndex, barIndex, component: self })"
+              @contextmenu="$emit('contextMenuBar', { event: $event, bar, rowIndex, barIndex, component: self })"
               @mouseenter="$emit('mouseEnterBar', { event: $event, bar, rowIndex, barIndex, component: self })"
               @mouseleave="$emit('mouseLeaveBar', { event: $event, bar, rowIndex, barIndex, component: self })"
             >
@@ -400,7 +401,7 @@ export default {
             const targetBar = bars[targetIndex]
             const targetBarFromTime = targetBar.from.getTime()
             const targetBarToTime = targetBar.to.getTime()
-            if (targetBarFromTime <= barToTime && barFromTime <= targetBarToTime) {
+            if (targetBarFromTime < barToTime && barFromTime < targetBarToTime) {
               const targetBarId = this.barId(rowIndex, targetIndex)
               const targetBarElement = this.$el.querySelector(`[data-bar-id="${targetBarId}"]`)
               const targetBottom = targetBarElement.offsetTop + targetBarElement.offsetHeight
@@ -414,7 +415,7 @@ export default {
             for (const targetBar of topGroups[top]) {
               const targetBarFromTime = targetBar.from.getTime()
               const targetBarToTime = targetBar.to.getTime()
-              if (targetBarFromTime <= barToTime && barFromTime <= targetBarToTime) {
+              if (targetBarFromTime < barToTime && barFromTime < targetBarToTime) {
                 collided = true
                 break
               }
